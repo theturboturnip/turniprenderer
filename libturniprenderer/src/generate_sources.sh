@@ -1,4 +1,6 @@
 #!/bin/bash
 cd "$(dirname $0)"
-find_output=$(find -name *.cpp)
-echo "add_library(libturnipripper STATIC $find_output)" > CMakeLists.txt
+INCLUDE_DIR=../include/turniprenderer
+header_files=$(find $INCLUDE_DIR -name *.h)
+cpp_files=$(find -name *.cpp)
+printf "include_directories($INCLUDE_DIR)\nadd_library(turniprenderer STATIC $header_files $cpp_files)\n" > CMakeLists.txt
