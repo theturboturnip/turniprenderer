@@ -1,5 +1,0 @@
-project(cube)
-add_subdirectory(../../libturniprenderer turniprenderer)
-include_directories(../../libturniprenderer/include/)
-add_executable(cube ./main.cpp)
-target_link_libraries(cube turniprenderer)
