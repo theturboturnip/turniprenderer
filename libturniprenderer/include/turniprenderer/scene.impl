@@ -1,0 +1,15 @@
+#pragma once
+
+namespace TurnipRenderer {
+	Scene::Scene(Context& context) : ContextAware(context), Heirarchy<SceneObject>(
+			std::make_unique<SceneObject>(context, *this, glm::vec3(0))
+			){}
+	
+	template<typename... Args>
+	SceneObject* Scene::addObject(SceneObject& newParent, int relSiblingIndex, Args&&... args){
+		return Heirarchy<SceneObject>::addNode(
+			std::make_unique<SceneObject>(context, *this, std::forward<Args...>(args...)),
+			&newParent, relSiblingIndex
+			);
+	}
+}

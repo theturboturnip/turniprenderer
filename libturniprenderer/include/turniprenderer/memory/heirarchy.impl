@@ -1,0 +1,72 @@
+#pragma once
+#include "heirarchy.h"
+
+namespace TurnipRenderer {
+	template<class Node>
+	void Heirarchy<Node>::NodeData::updateCachedEnd(bool updateParent){
+				if (children.size() == 0){
+					cachedEndMinus1 = me;
+				}else{
+					cachedEndMinus1 = children[children.size() - 1]->nodeData.cachedEndMinus1;
+				}
+				if (updateParent) parent->nodeData.updateCachedEnd(); // Tail recursion, won't add to the stack
+			}
+	
+	template<class Node>
+	Heirarchy<Node>::Heirarchy(std::unique_ptr<Node> newRoot) : root(std::move(newRoot)) {			
+		heirarchy.push_back(root.get());
+		root->nodeData.me = heirarchy.begin();
+	// This is meant to be meaningless data
+	root->nodeData.parent = root->nodeData.me;
+	root->nodeData.siblingIndex = 0;
+	root->nodeData.updateCachedEnd(false); // Don't update the parent
+}
+
+	template<class Node>
+	typename Heirarchy<Node>::NodeRef Heirarchy<Node>::addNode(std::unique_ptr<Node> nodeStoragePtr, Node* newParentPtr, int relSiblingIndex){
+	NodeRef newParent = (newParentPtr == nullptr) ? root->nodeData.me : newParentPtr->nodeData.me;
+	size_t newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
+	
+	NodeRef addedNode = heirarchy.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex), nodeStoragePtr.get());
+	auto& nodeData = addedNode->nodeData;
+	nodeData.me = addedNode;
+	nodeData.parent = newParent;
+	nodeData.siblingIndex = newSiblingIndex;
+	updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+			
+	storage.push_back(std::move(nodeStoragePtr));
+	return nodeData.me;
+}
+	template<class Node>
+void Heirarchy<Node>::unparentNode(Node& node, int relSiblingIndex){
+	reparentNode(node, *root, relSiblingIndex);
+}
+	template<class Node>
+void Heirarchy<Node>::reparentNode(Node& node, Node& newParentNode, int relSiblingIndex){
+		if (&node == root.get()) return;
+			
+	auto& nodeData = node.nodeData;
+	auto& newParent = nodeData.parent;
+	auto newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
+
+	// Update old stuff
+	{
+		// Update old parent
+		auto& oldSiblings = nodeData.parent->nodeData.children;
+		oldSiblings.erase(oldSiblings.begin() + nodeData.siblingIndex);
+		updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+	}
+				
+	// Update the node itself
+	moveNodeAndChildren(nodeData.me, nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex));
+	nodeData.parent = newParent;
+	nodeData.siblingIndex = newSiblingIndex;
+
+	// Update new parent
+	{
+		auto& newSiblings = newParent->nodeData.children;
+		newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
+		updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+	}
+}
+}
