@@ -16,17 +16,18 @@ namespace TurnipRenderer {
 	public:
 		Scene(Context& context);
 		using Heirarchy<SceneObject>::NodeData;
+		using Heirarchy<SceneObject>::heirarchy;
 		
 		template<typename... Args>
-		SceneObject* addObject(Args&&... args){
-			return addObject(*Heirarchy<SceneObject>::root, -1, std::forward<Args...>(args...));
+		SceneObject* addObjectToEndOfRoot(Args... args){
+			return addObjectToIndexOfObject(*Heirarchy<SceneObject>::root, -1, args...);
 		}
 		template<typename... Args>
-		SceneObject* addObject(SceneObject& newParent, Args&&... args){
-			return addObject(newParent, -1, std::forward<Args...>(args...));
+		SceneObject* addObjectToEndOfObject(SceneObject& newParent, Args... args){
+			return addObjectToIndexOfObject(newParent, -1, args...);
 		}
 		template<typename... Args>
-		SceneObject* addObject(SceneObject& newParent, int relSiblingIndex, Args&&... args);
+		SceneObject* addObjectToIndexOfObject(SceneObject& newParent, int relSiblingIndex, Args... args);
 		void reparentObject(SceneObject& sceneObject, SceneObject& newParent, int relSiblingIndex = -1){
 			Heirarchy<SceneObject>::reparentNode(sceneObject, newParent, relSiblingIndex);
 		}

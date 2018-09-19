@@ -1,5 +1,7 @@
 #pragma once
 
+#include <assert.h>
+
 namespace TurnipRenderer {
 
 	// NOT THREAD SAFE
@@ -29,6 +31,9 @@ namespace TurnipRenderer {
 			bool operator == (ConstRawNodeRef rawRef) const {
 				return internal == rawRef;
 			}
+			bool operator != (ConstRawNodeRef rawRef) const {
+				return !this->operator==(rawRef);
+			}
 			NodeRef& operator = (RawNodeRef rawRef) {
 				internal = rawRef;
 				return *this;
@@ -40,14 +45,21 @@ namespace TurnipRenderer {
 			Node* operator ->(){
 				return *internal;
 			}
-			NodeRef& operator ++(){
+			/*NodeRef& operator ++(){
 				internal++;
 				return *this;
-			}
-			NodeRef operator ++() const {
+				}*/
+			/*NodeRef operator ++() const {
 				return NodeRef(RawNodeRef(internal)++);
+				}*/
+			NodeRef operator +(int i) const {
+				// Assume i == 1 for now
+				assert(i == 1);
+
+				auto newInternal = internal;
+				return NodeRef(++newInternal);
 			}
-			operator Node* (){
+			explicit operator Node* (){
 				return *internal;
 			}
 			operator RawNodeRef(){
@@ -62,14 +74,15 @@ namespace TurnipRenderer {
 		
 		class NodeData {
 			friend class Heirarchy<Node>;
-
+		public:	
 			inline NodeRef begin() const {
 				return me;
 			}
 			inline NodeRef end() const {
-				return ++cachedEndMinus1;
+				return cachedEndMinus1 + 1;
 			}
-		private:
+			//private:
+			Heirarchy<Node>* heirarchy = nullptr;
 			NodeRef me;
 			NodeRef parent;
 			std::vector<NodeRef> children;
@@ -87,11 +100,11 @@ namespace TurnipRenderer {
 		// These don't need to be in the .impl file, because they only deal in NodeRefs
 		
 		inline size_t getRealSiblingIndex(NodeRef newParent, int relSiblingIndex){
-			const auto newSiblingCount = newParent->nodeData.children.size();
+			const int newSiblingCount = static_cast<int>(newParent->nodeData.children.size());
 			if (newSiblingCount == 0) return 0;
 			
 			if (relSiblingIndex > newSiblingCount) relSiblingIndex %= newSiblingCount;
-			while (relSiblingIndex < 0) relSiblingIndex += newSiblingCount;
+			while (relSiblingIndex < 0) relSiblingIndex += newSiblingCount + 1;
 			
 			return static_cast<size_t>(relSiblingIndex);
 		}
@@ -105,7 +118,7 @@ namespace TurnipRenderer {
 		// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
 		inline void updateNodeParent(NodeRef parent, size_t siblingIndex){
 			auto& siblings = parent->nodeData.children;
-			if (siblingIndex == siblings.size() - 1)
+			if (siblingIndex >= siblings.size() - 1)
 				parent->nodeData.updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
 			// Update new siblings that have changed
 			for (size_t i = siblingIndex; i < siblings.size(); i++) {
@@ -115,7 +128,8 @@ namespace TurnipRenderer {
 		
 		// Utility function to use when reparenting nodes
 		inline void moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
-			heirarchy.splice(++newLocation, // This is the "element BEFORE which the content will be inserted", the newLocation is the element AFTER which the content should be inserted
+			if (newLocation + 1 == toMove->nodeData.begin()) return;
+			heirarchy.splice(newLocation + 1, // This is the "element BEFORE which the content will be inserted", the newLocation is the element AFTER which the content should be inserted
 							 heirarchy, // A std::list splicing itself is defined to work
 							 toMove->nodeData.begin(), toMove->nodeData.end());
 		}

@@ -10,8 +10,8 @@ namespace TurnipRenderer {
 
 	class SceneObject : ContextSceneAware {
 		friend class Heirarchy<SceneObject>;
-		Scene::NodeData nodeData;
 	public:
+		std::string name;
 			glm::vec3 localPosition;
 			glm::quat localRotation;
 			glm::vec3 localScale;
@@ -20,8 +20,12 @@ namespace TurnipRenderer {
 			}
 	   
 
-		SceneObject(Context& context, Scene& scene, glm::vec3 localPosition, glm::quat localRotation = glm::quat(), glm::vec3 localScale = glm::vec3(1))
-			: ContextSceneAware(context, scene), localPosition(localPosition), localRotation(localRotation), localScale(localScale) {}
+		SceneObject(Context& context, Scene& scene, std::string&& name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(), glm::vec3 localScale = glm::vec3(1))
+			: ContextSceneAware(context, scene), name(name), localPosition(localPosition), localRotation(localRotation), localScale(localScale) {}
+
+		//private:
+				Scene::NodeData nodeData;
+
 	};
 	
 }
