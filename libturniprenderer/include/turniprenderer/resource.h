@@ -39,6 +39,8 @@ namespace TurnipRenderer {
 	public:
 		constexpr static bool IsConst = std::is_const<T>::value;
 
+		ResourceHandle()
+			: ResourceHandle(nullptr, false) {}
 		ResourceHandle(ResourceContainer<ResourceType>* newContainer)
 			: ResourceHandle(newContainer, true) {}
         ResourceHandle(const ResourceHandle<T>& copyFrom)
@@ -49,15 +51,16 @@ namespace TurnipRenderer {
 			container->refCount++;
             return *this;
 		}
-        ResourceHandle(ResourceHandle<T>&& moveFrom)
-			: ResourceHandle(moveFrom.container, false){
+        //ResourceHandle(ResourceHandle<T>&& moveFrom)
+		/*	: ResourceHandle(moveFrom.container, false){
 			moveFrom.container = nullptr;
-		}
-		ResourceHandle<T>& operator=(ResourceHandle<T>&& newThing){
+			}*/
+		//ResourceHandle<T>& operator=(ResourceHandle<T>&& newThing)
+		/*{
 			if (container) container->refCount--;
 			container = newThing.container;
 			// DO NOT INCREMENT REFCOUNT! This transfers ownership from newThing
-		}
+			}*/
         ~ResourceHandle(){
             if (container)
 				container->refCount--;
@@ -68,14 +71,26 @@ namespace TurnipRenderer {
 		}
 
         T* operator->() const {
-            return &container->resource;
+			return (T*)(*this);
         }
         T& operator*() const {
+			// TODO: Fail in some way when container == nullptr?
             return container->resource;
         }
+		operator T*() const {
+			if (container)
+				return &container->resource;
+			return nullptr;
+		}
+		operator bool() const {
+			if (container) return container->refCount > 0;
+			return false;
+		}
 
         inline uint32_t refCount() const {
-			return container->refCount;
+			if (container)
+				return container->refCount;
+			return 0;
 		}
 		
 	protected:

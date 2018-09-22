@@ -8,31 +8,36 @@
 #include "memory/heirarchy.h"
 
 namespace TurnipRenderer {
-	class SceneObject;
+	class Entity;
 
 	// This is a bad comment to be writing, although it would be a funny example for the start of a talk
 	// TODO: Thread Safety
-	class Scene : ContextAware, Heirarchy<SceneObject> {
+	class Scene : ContextAware, Heirarchy<Entity> {
 	public:
 		Scene(Context& context);
-		using Heirarchy<SceneObject>::NodeData;
-		using Heirarchy<SceneObject>::heirarchy;
+		using Heirarchy<Entity>::NodeData;
+		using Heirarchy<Entity>::heirarchy;
 		
 		template<typename... Args>
-		SceneObject* addObjectToEndOfRoot(Args... args){
-			return addObjectToIndexOfObject(*Heirarchy<SceneObject>::root, -1, args...);
+		Entity* addObjectToEndOfRoot(Args... args){
+			return addObjectToIndexOfObject(*Heirarchy<Entity>::root, -1, args...);
 		}
 		template<typename... Args>
-		SceneObject* addObjectToEndOfObject(SceneObject& newParent, Args... args){
+		Entity* addObjectToEndOfObject(Entity& newParent, Args... args){
 			return addObjectToIndexOfObject(newParent, -1, args...);
 		}
 		template<typename... Args>
-		SceneObject* addObjectToIndexOfObject(SceneObject& newParent, int relSiblingIndex, Args... args);
-		void reparentObject(SceneObject& sceneObject, SceneObject& newParent, int relSiblingIndex = -1){
-			Heirarchy<SceneObject>::reparentNode(sceneObject, newParent, relSiblingIndex);
+		Entity* addObjectToIndexOfObject(Entity& newParent, int relSiblingIndex, Args... args){
+			return (Entity*)Heirarchy<Entity>::addNode(
+				std::make_unique<Entity>(context, *this, args...),
+				&newParent, relSiblingIndex
+				);
 		}
-		void unparentObject(SceneObject& sceneObject, int relSiblingIndex = -1){
-			Heirarchy<SceneObject>::unparentNode(sceneObject, relSiblingIndex);
+		void reparentObject(Entity& sceneObject, Entity& newParent, int relSiblingIndex = -1){
+			Heirarchy<Entity>::reparentNode(sceneObject, newParent, relSiblingIndex);
+		}
+		void unparentObject(Entity& sceneObject, int relSiblingIndex = -1){
+			Heirarchy<Entity>::unparentNode(sceneObject, relSiblingIndex);
 		}
 		//void queueObjectForDeleting(SceneObject& sceneObject);
 
@@ -46,7 +51,7 @@ namespace TurnipRenderer {
 }
 #include "scene_object.h"
 #include "memory/heirarchy.impl"
-#include "scene.impl"
+//#include "scene.impl"
 /*#include "scene_object.h"
 // TODO: Relocate to scene.impl
 void Scene::queueObjectForDeleting(SceneObject* sceneObject){
