@@ -60,7 +60,7 @@ namespace TurnipRenderer{
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
 
-		ResourceHandle<Mesh> fullscreenQuad;
+		ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
 

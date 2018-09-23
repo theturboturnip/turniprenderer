@@ -152,7 +152,7 @@ namespace TurnipRenderer{
 				quadData.indices.push_back(3);
 			}
 
-			fullscreenQuad = resources.addResource(Mesh(quadData));
+			quad = resources.addResource(Mesh(quadData));
 		}
 		
 		ResourceHandle<Mesh> planeMesh;
@@ -328,7 +328,7 @@ void main(){
 		glActiveTexture(GL_TEXTURE0);
 		glBindTexture(GL_TEXTURE_2D, buffer);
 		glUniform1i(0, 0); // Bind uniform 0 to texture 0
-		drawMesh(*fullscreenQuad);
+		drawMesh(*quad);
 	}
 	void Context::drawMesh(Mesh& mesh){
 		glBindVertexArray(mesh.getVAO());
