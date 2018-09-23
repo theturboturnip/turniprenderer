@@ -22,6 +22,7 @@ namespace TurnipRenderer {
 		root->nodeData.parent = root->nodeData.me;
 		root->nodeData.siblingIndex = 0;
 		root->nodeData.updateCachedEnd(false); // Don't update the parent
+		root->initialize();
 	}
 
 	template<class Node>
@@ -39,7 +40,9 @@ namespace TurnipRenderer {
 		auto& newSiblings = newParent->nodeData.children;
 		newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
 		updateNodeParent(nodeData.parent, nodeData.siblingIndex);
-			
+
+		addedNode->initialize();
+		
 		storage.push_back(std::move(nodeStoragePtr));
 		return nodeData.me;
 	}

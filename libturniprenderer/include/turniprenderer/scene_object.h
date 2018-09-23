@@ -19,16 +19,18 @@ namespace TurnipRenderer {
 		public:
 			Transform(Entity& entity, glm::vec3 lp, glm::quat lr, glm::vec3 ls)
 				: entity(entity), m_localPosition(lp), m_localRotation(lr), m_localScale(ls) {}
-			void initialize();
+			void initialize(){
+				updateMatrices();
+			}
 
 			inline const glm::vec3& localPosition(){
 				return m_localPosition;
 			}
-			inline void setLocalPosition(glm::vec3 newLocalPosition){
+			/*inline void setLocalPosition(glm::vec3 newLocalPosition){
 				invalidateLocal();
 				m_localPosition = newLocalPosition;
-			}
-		    inline const glm::mat4& transformWorldSpaceFromModelSpace(){
+				}*/
+		    inline const glm::mat4 transformWorldSpaceFromModelSpace(){
 				updateMatricesIfNecessary();
 				return cachedTransformWorldSpaceFromModelSpace;
 			}

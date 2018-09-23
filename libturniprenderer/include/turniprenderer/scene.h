@@ -28,10 +28,11 @@ namespace TurnipRenderer {
 		}
 		template<typename... Args>
 		Entity* addObjectToIndexOfObject(Entity& newParent, int relSiblingIndex, Args... args){
-			return (Entity*)Heirarchy<Entity>::addNode(
+			auto* entity = (Entity*)Heirarchy<Entity>::addNode(
 				std::make_unique<Entity>(context, *this, args...),
 				&newParent, relSiblingIndex
 				);
+			return entity;
 		}
 		void reparentObject(Entity& sceneObject, Entity& newParent, int relSiblingIndex = -1){
 			Heirarchy<Entity>::reparentNode(sceneObject, newParent, relSiblingIndex);

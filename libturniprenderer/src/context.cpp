@@ -17,7 +17,7 @@ namespace TurnipRenderer{
 	}
 	
 	void Context::initWindow(){
-		if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
+		if (SDL_Init(SDL_INIT_VIDEO) != 0){
 			LogAvailableError();
 			return;
 		}
@@ -224,12 +224,12 @@ namespace TurnipRenderer{
 		plane1->mesh = quad;
 		plane1->isOpaque = false;
 		plane1->transparencyColor = glm::vec4(1, 0.1, 0.1, 0.5);
-		auto* plane2 = scene.addObjectToEndOfRoot( "Transparent Plane #2", glm::vec3(0.25,0,2));
+		auto* plane2 = scene.addObjectToEndOfObject(*plane1, "Transparent Plane #2", glm::vec3(0.25,0,2));
 		plane2->mesh = quad;
 		plane2->isOpaque = false;
 		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
-		/*Object(*plane2,*/
-		auto* plane3 = scene.addObjectToEndOfRoot( "Transparent Plane #3", glm::vec3(0.25,0,2));
+		/**/
+		auto* plane3 = scene.addObjectToEndOfObject(*plane2, "Transparent Plane #3", glm::vec3(0.25,0,2));
 		plane3->mesh = quad;
 		plane3->isOpaque = false;
 		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);
@@ -385,13 +385,13 @@ void main(){
 	bool Context::renderFrame(){
 		bool done = false;
 		SDL_Event event;
-		/*while (SDL_PollEvent(&event))
+		while (SDL_PollEvent(&event))
 		{
 			if (event.type == SDL_QUIT)
 				done = true;
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
 				done = true;
-		}*/
+		}
 
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
@@ -400,7 +400,7 @@ void main(){
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
 			glViewport(0,0, WIDTH,HEIGHT);
-			glClearColor(1,1,1,0);
+			glClearColor(1,0.5,1,0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glUseProgram(debugOpaqueProgram->programId);
 
