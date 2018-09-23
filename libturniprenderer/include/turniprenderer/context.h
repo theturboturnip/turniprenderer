@@ -1,6 +1,7 @@
 #pragma once
 
 #include <string>
+#include <functional>
 
 #include "resource_manager.h"
 #include "engine_fwd.h"
@@ -64,10 +65,12 @@ namespace TurnipRenderer{
 		ResourceHandle<Shader> debugOpaqueProgram;
 		ResourceHandle<Shader> debugTransparentProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
+		ResourceHandle<Shader> transparencyResolve;
 
 		void createFramebuffers();
 		void drawMesh(Mesh& mesh);
 		void drawQuad(Shader& shader, GLuint buffer);
+		void drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
 		void LogAvailableError();
 	};
 }

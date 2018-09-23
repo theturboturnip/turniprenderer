@@ -220,15 +220,18 @@ namespace TurnipRenderer{
 		}
 		scene.addObjectToEndOfRoot("Plane", glm::vec3(0,0,0))->mesh = planeMesh;
 
-		auto* plane1 = scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(0,0,2));
+		auto* plane1 = scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(1,0,2));
 		plane1->mesh = quad;
 		plane1->isOpaque = false;
-		auto* plane2 = scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(0,0,4));
+		plane1->transparencyColor = glm::vec4(1, 0.1, 0.1, 0.5);
+		auto* plane2 = scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(1.2,0,4));
 		plane2->mesh = quad;
 		plane2->isOpaque = false;
-		auto* plane3 = scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(0,0,6));
+		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
+		auto* plane3 = scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(1.5,0,6));
 		plane3->mesh = quad;
 		plane3->isOpaque = false;
+		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);
 
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
@@ -345,7 +348,33 @@ color = vec4(texture(tex, IN.uv0));
 }
 )"));
 
-		
+		transparencyResolve = resources.addResource(Shader(passthroughVertexShader,
+															  R"(
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(location = 0) uniform sampler2D bucket0;
+layout(location = 1) uniform sampler2D bucket1;
+layout(location = 2) uniform sampler2D bucket2;
+layout(location = 3) uniform sampler2D bucket3;
+
+layout(location = 0) in struct {
+    vec2 uv0;
+} IN;
+
+layout(location = 0) out vec4 color;
+
+void main(){
+    vec4 values[4] = vec4[]( texture(bucket0, IN.uv0), texture(bucket1, IN.uv0), texture(bucket2, IN.uv0), texture(bucket3, IN.uv0) );
+    color = vec4(0);
+    //for (int i = 0; i < 4; i++){
+    for (int i = 3; i >= 0; i--){
+        float srcAlpha = values[i].a;
+        color = vec4(color.rgb * (1 - srcAlpha) + values[i].rgb * srcAlpha, color.a + values[i].a);
+    }
+}
+)"));
 	}
 
 	void Context::CameraData::updateProjectionMatrix(){
@@ -370,7 +399,7 @@ color = vec4(texture(tex, IN.uv0));
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
 			glViewport(0,0, WIDTH,HEIGHT);
-			glClearColor(0,0,0.4f,0);
+			glClearColor(1,1,1,0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glUseProgram(debugOpaqueProgram->programId);
 
@@ -410,8 +439,30 @@ color = vec4(texture(tex, IN.uv0));
 				}
 			}
 		}
-		// TODO: Blend transparency buffer onto opaque buffer
-		{}
+		// Blend transparency buffer onto opaque buffer
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
+			glViewport(0,0, WIDTH,HEIGHT);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			drawQuadAdvanced(*transparencyResolve, [this]() {
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[0]);
+						glUniform1i(0, 0); // Bind uniform 0 to texture 0
+
+						glActiveTexture(GL_TEXTURE1);
+						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[1]);
+						glUniform1i(1, 1); // Bind uniform 0 to texture 0
+
+						glActiveTexture(GL_TEXTURE2);
+						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[2]);
+						glUniform1i(2, 2); // Bind uniform 0 to texture 0
+
+						glActiveTexture(GL_TEXTURE3);
+						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[3]);
+						glUniform1i(3, 3); // Bind uniform 0 to texture 0
+				});
+		}
 		// Postprocessing Effects
 		{
 			// TODO: Actual Postprocessing
@@ -420,19 +471,23 @@ color = vec4(texture(tex, IN.uv0));
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0,0, WIDTH,HEIGHT);
 			glDisable(GL_BLEND);
-			//drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
-			drawQuad(*postProcessPassthrough, renderPassData.transparencyColorBucketBuffers[0]);
+			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 		}
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
 	}
 
 	void Context::drawQuad(Shader& shader, GLuint buffer){
+		drawQuadAdvanced(shader, [buffer](){
+				// Bind the current postprocessing buffer to tex0
+				glActiveTexture(GL_TEXTURE0);
+				glBindTexture(GL_TEXTURE_2D, buffer);
+				glUniform1i(0, 0); // Bind uniform 0 to texture 0
+			});
+	}
+	void Context::drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures){
 		glUseProgram(shader.programId);
-		// Bind the current postprocessing buffer to tex0
-		glActiveTexture(GL_TEXTURE0);
-		glBindTexture(GL_TEXTURE_2D, buffer);
-		glUniform1i(0, 0); // Bind uniform 0 to texture 0
+		bindTextures();
 		drawMesh(*quad);
 	}
 	void Context::drawMesh(Mesh& mesh){
