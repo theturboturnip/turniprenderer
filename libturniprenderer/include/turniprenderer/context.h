@@ -29,6 +29,24 @@ namespace TurnipRenderer{
 			glm::mat4 transformProjectionFromView = glm::mat4(1.0f);
 		} cameraData;
 
+		struct RenderPassData {
+			union {
+				struct {
+					GLuint colorBuffer = 0;
+					GLuint dummy;
+				};
+				GLuint postProcessBuffers[2]; // Post Processing is done 0->1->0->1...
+			};
+				
+			GLuint opaqueDepthBuffer = 0;
+			GLuint transparencyColorBucketBuffer = 0;
+			GLuint transparencyDepthBuffer = 0;
+
+			GLuint opaqueFramebuffer = 0;
+			GLuint postProcessingFramebuffers[2] = {0, 0};
+			GLuint transparencyBucketingFramebuffer = 0;
+		} renderPassData;
+
 		Context(std::string name);
 		~Context();
 		bool renderFrame();
@@ -41,9 +59,14 @@ namespace TurnipRenderer{
 
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
-		
-		ResourceHandle<Shader> debugProgram;
 
+		ResourceHandle<Mesh> fullscreenQuad;
+		ResourceHandle<Shader> debugProgram;
+		ResourceHandle<Shader> postProcessPassthrough;
+
+		void createFramebuffers();
+		void drawMesh(Mesh& mesh);
+		void drawQuad(Shader& shader, GLuint buffer);
 		void LogAvailableError();
 	};
 }

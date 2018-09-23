@@ -60,34 +60,126 @@ namespace TurnipRenderer{
 
 		glClearColor(0.0f,0.0f,0.4f,0.0f);
 		LogAvailableError();
+
+		createFramebuffers();
+
+		LogAvailableError();
+	}
+
+	void Context::createFramebuffers(){
+		auto createColorBuffer = [](GLint internalFormat, GLenum format) -> GLuint {
+			GLuint colorBuffer;
+			glGenTextures(1, &colorBuffer);
+			glBindTexture(GL_TEXTURE_2D, colorBuffer);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, WIDTH, HEIGHT, 0, format, GL_FLOAT, nullptr);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			return colorBuffer;
+		};
+		auto createDepthBuffer = []() -> GLuint {
+			GLuint renderBuffer;
+			glGenRenderbuffers(1, &renderBuffer);
+			glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
+			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
+			return renderBuffer;
+		};
+		auto createFramebuffer = [this](GLuint colorTexture, GLuint depthTexture = 0) -> GLuint {
+			GLuint frameBuffer;
+			glGenFramebuffers(1, &frameBuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, colorTexture, 0);
+			GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
+			glDrawBuffers(1, drawBuffers);
+			if (depthTexture > 0){
+				glBindRenderbuffer(GL_RENDERBUFFER, depthTexture);
+				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthTexture);
+			}
+
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				LogAvailableError();
+			return frameBuffer;
+		};
+		
+
+		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
+		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
+		renderPassData.transparencyColorBucketBuffer = createColorBuffer(GL_RGBA32F, GL_RGBA);
+		renderPassData.opaqueDepthBuffer = createDepthBuffer();
+		renderPassData.transparencyDepthBuffer = createDepthBuffer();
+		
+		renderPassData.opaqueFramebuffer = createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
+		renderPassData.postProcessingFramebuffers[0] = createFramebuffer(renderPassData.postProcessBuffers[0]);
+		renderPassData.postProcessingFramebuffers[1] = createFramebuffer(renderPassData.postProcessBuffers[1]);
+		renderPassData.transparencyBucketingFramebuffer = createFramebuffer(renderPassData.transparencyColorBucketBuffer, renderPassData.transparencyDepthBuffer);
 	}
 
 	void Context::initDemoScene(){
+		{
+			Mesh::MeshData quadData;
+			quadData.vertices.push_back(Mesh::Vertex{
+					glm::vec3(-1, -1, 0),
+						glm::vec3(0),
+						glm::vec3(0),
+						glm::vec2(0, 0)
+						});
+			quadData.vertices.push_back(Mesh::Vertex{
+					glm::vec3(1, -1, 0),
+						glm::vec3(0),
+						glm::vec3(0),
+						glm::vec2(1, 0)
+						});
+			quadData.vertices.push_back(Mesh::Vertex{
+					glm::vec3(-1, 1, 0),
+						glm::vec3(0),
+						glm::vec3(0),
+						glm::vec2(0, 1)
+						});
+			quadData.vertices.push_back(Mesh::Vertex{
+					glm::vec3(1, 1, 0),
+						glm::vec3(0),
+						glm::vec3(0),
+						glm::vec2(1, 1)
+						});
+
+			{
+				quadData.indices.push_back(0);
+				quadData.indices.push_back(1);
+				quadData.indices.push_back(2);
+			}
+			{
+				quadData.indices.push_back(1);
+				quadData.indices.push_back(2);
+				quadData.indices.push_back(3);
+			}
+
+			fullscreenQuad = resources.addResource(Mesh(quadData));
+		}
+		
 		ResourceHandle<Mesh> planeMesh;
 		{
 			Mesh::MeshData planeData;
 			const auto planeNormal = glm::normalize(glm::vec3(0, 1, 1));
 			const auto planeTangent = glm::normalize(glm::vec3(0, 1, -1));
 			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(-1, 1, -1),
+						glm::vec3(-1, -1, -1),
 							planeNormal,
 							planeTangent,
 							glm::vec2(0, 0)
 							});
 			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(1, 1, -1),
+						glm::vec3(1, -1, -1),
 							planeNormal,
 							planeTangent,
 							glm::vec2(1, 0)
 							});
 			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(-1, -1, 1),
+						glm::vec3(-1, 1, 1),
 							planeNormal,
 							planeTangent,
 							glm::vec2(0, 1)
 							});
 			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(1, -1, 1),
+						glm::vec3(1, 1, 1),
 							planeNormal,
 							planeTangent,
 							glm::vec2(1, 1)
@@ -117,15 +209,16 @@ namespace TurnipRenderer{
 
 		debugProgram = resources.addResource(Shader(R"(
 #version 330 core
+#extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_explicit_uniform_location : enable
 layout(location = 0) in vec3 position;
-layout(location = 1)   in  vec3 normal;
-layout(location = 2)    in  vec3 tangent;
-layout(location = 3)   in  vec2 uv0;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
 
 layout(location = 0) uniform mat4 MVP;
 
-out vec3 vertexColor;
+layout(location = 0) out vec3 vertexColor;
 
 void main() {
     gl_Position = MVP * vec4(position, 1);
@@ -133,12 +226,50 @@ void main() {
 }
 )", R"(
 #version 330 core
+#extension GL_ARB_separate_shader_objects : enable
 
-in vec3 vertexColor;
-out vec3 color;
+layout(location = 0) in vec3 vertexColor;
+layout(location = 0) out vec3 color;
 
 void main(){
     color = vertexColor;
+}
+)"));
+
+		std::string passthroughVertexShader = R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
+
+layout(location = 0) out struct {
+    vec2 uv0;
+} OUT;
+
+void main(){
+    gl_Position = vec4(position.x, position.y, 1, 1);
+    OUT.uv0 = uv0;
+}
+)";
+		postProcessPassthrough = resources.addResource(Shader(passthroughVertexShader,
+															  R"(
+#version 330 core
+#extension GL_ARB_explicit_uniform_location : enable
+#extension GL_ARB_separate_shader_objects : enable
+
+layout(location = 0) uniform sampler2D tex;
+
+layout(location = 0) in struct {
+    vec2 uv0;
+} IN;
+
+layout(location = 0) out vec4 color;
+
+void main(){
+    color = texture(tex, IN.uv0);
 }
 )"));
 	}
@@ -158,22 +289,51 @@ void main(){
 				done = true;
 		}
 
-		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-		glUseProgram(debugProgram->programId);
-		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
-		glm::mat4 MVP = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
-		glUniformMatrix4fv(0, 1, GL_FALSE,
-						   reinterpret_cast<const GLfloat*>(&MVP));
-		for (auto* entity : scene.heirarchy){
-			if (entity->mesh){
-				Mesh& mesh = *entity->mesh;
-				glBindVertexArray(mesh.getVAO());
-				glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.getIBO());
-				glDrawElements(GL_TRIANGLES, mesh.indices().size(), GL_UNSIGNED_INT, 0);
+		// Draw to opaque framebuffer
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
+			glViewport(0,0, WIDTH,HEIGHT);
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glUseProgram(debugProgram->programId);
+			glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
+			glm::mat4 MVP = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
+			glUniformMatrix4fv(0, 1, GL_FALSE,
+							   reinterpret_cast<const GLfloat*>(&MVP));
+			for (auto* entity : scene.heirarchy){
+				if (entity->mesh){
+					drawMesh(*entity->mesh);
+				}
 			}
+		}
+		// TODO: Draw to transparency buffer
+		{}
+		// TODO: Blend transparency buffer onto opaque buffer
+		{}
+		// Postprocessing Effects
+		{
+			// TODO: Actual Postprocessing
+			int currentPostprocessingBuffer = 0;
+			// Draw the final result to the screen
+			glBindFramebuffer(GL_FRAMEBUFFER, 0);
+			glViewport(0,0, WIDTH,HEIGHT);
+			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 		}
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
+	}
+
+	void Context::drawQuad(Shader& shader, GLuint buffer){
+		glUseProgram(shader.programId);
+		// Bind the current postprocessing buffer to tex0
+		glActiveTexture(GL_TEXTURE0);
+		glBindTexture(GL_TEXTURE_2D, buffer);
+		glUniform1i(0, 0); // Bind uniform 0 to texture 0
+		drawMesh(*fullscreenQuad);
+	}
+	void Context::drawMesh(Mesh& mesh){
+		glBindVertexArray(mesh.getVAO());
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.getIBO());
+		glDrawElements(GL_TRIANGLES, mesh.indices().size(), GL_UNSIGNED_INT, 0);
 	}
 
 	void Context::LogAvailableError(){
