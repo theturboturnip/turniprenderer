@@ -45,13 +45,16 @@ namespace TurnipRenderer {
 			Node* operator ->(){
 				return *internal;
 			}
-			/*NodeRef& operator ++(){
+			NodeRef& operator ++(){
 				internal++;
 				return *this;
-				}*/
+			}
 			/*NodeRef operator ++() const {
 				return NodeRef(RawNodeRef(internal)++);
 				}*/
+			NodeRef operator ++(int dummy) const {
+				return (*this) + 1;
+			}
 			NodeRef operator +(int i) const {
 				// Assume i == 1 for now
 				assert(i == 1);

@@ -17,7 +17,7 @@ namespace TurnipRenderer{
 	}
 	
 	void Context::initWindow(){
-		if (SDL_Init(SDL_INIT_VIDEO) != 0){
+		if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
 			LogAvailableError();
 			return;
 		}
@@ -224,11 +224,12 @@ namespace TurnipRenderer{
 		plane1->mesh = quad;
 		plane1->isOpaque = false;
 		plane1->transparencyColor = glm::vec4(1, 0.1, 0.1, 0.5);
-		auto* plane2 = scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(1.2,0,4));
+		auto* plane2 = scene.addObjectToEndOfRoot( "Transparent Plane #2", glm::vec3(0.25,0,2));
 		plane2->mesh = quad;
 		plane2->isOpaque = false;
 		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
-		auto* plane3 = scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(1.5,0,6));
+		/*Object(*plane2,*/
+		auto* plane3 = scene.addObjectToEndOfRoot( "Transparent Plane #3", glm::vec3(0.25,0,2));
 		plane3->mesh = quad;
 		plane3->isOpaque = false;
 		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);
@@ -384,15 +385,15 @@ void main(){
 	bool Context::renderFrame(){
 		bool done = false;
 		SDL_Event event;
-		while (SDL_PollEvent(&event))
+		/*while (SDL_PollEvent(&event))
 		{
 			if (event.type == SDL_QUIT)
 				done = true;
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
 				done = true;
-		}
+		}*/
 
-		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
+		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		
 		// Draw to opaque framebuffer
@@ -407,7 +408,7 @@ void main(){
 			
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transformLocalSpaceFromModelSpace();
+					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 							   reinterpret_cast<const GLfloat*>(&MVP));
 					drawMesh(*entity->mesh);
@@ -431,7 +432,7 @@ void main(){
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && !entity->isOpaque){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transformLocalSpaceFromModelSpace();
+					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
 					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
