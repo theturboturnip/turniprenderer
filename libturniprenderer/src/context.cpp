@@ -67,7 +67,7 @@ namespace TurnipRenderer{
 	}
 
 	void Context::createFramebuffers(){
-		auto createColorBuffer = [](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT) -> GLuint {
+		auto createColorBuffer = [this](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT) -> GLuint {
 			GLuint colorBuffer;
 			glGenTextures(1, &colorBuffer);
 			glBindTexture(GL_TEXTURE_2D, colorBuffer);
@@ -99,18 +99,38 @@ namespace TurnipRenderer{
 				LogAvailableError();
 			return frameBuffer;
 		};
-		
+		auto createTransparencyFramebuffer = [this]() -> GLuint {
+			GLuint frameBuffer;
+			glGenFramebuffers(1, &frameBuffer);
+			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderPassData.transparencyColorBucketBuffers[0], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, renderPassData.transparencyColorBucketBuffers[1], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, renderPassData.transparencyColorBucketBuffers[2], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, renderPassData.transparencyColorBucketBuffers[3], 0);
+
+			GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
+			glDrawBuffers(4, drawBuffers);
+			glBindRenderbuffer(GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
+			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
+
+			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				LogAvailableError();
+			return frameBuffer;
+		};
 
 		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
 		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
-		renderPassData.transparencyColorBucketBuffer = createColorBuffer(GL_RGBA32UI, GL_RGBA, GL_UNSIGNED_INT);
+		renderPassData.transparencyColorBucketBuffers[0] = createColorBuffer(GL_RGBA8, GL_RGBA);
+		renderPassData.transparencyColorBucketBuffers[1] = createColorBuffer(GL_RGBA8, GL_RGBA);
+		renderPassData.transparencyColorBucketBuffers[2] = createColorBuffer(GL_RGBA8, GL_RGBA);
+		renderPassData.transparencyColorBucketBuffers[3] = createColorBuffer(GL_RGBA8, GL_RGBA);
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
 		renderPassData.transparencyDepthBuffer = createDepthBuffer();
 		
 		renderPassData.opaqueFramebuffer = createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
 		renderPassData.postProcessingFramebuffers[0] = createFramebuffer(renderPassData.postProcessBuffers[0]);
 		renderPassData.postProcessingFramebuffers[1] = createFramebuffer(renderPassData.postProcessBuffers[1]);
-		renderPassData.transparencyBucketingFramebuffer = createFramebuffer(renderPassData.transparencyColorBucketBuffer, renderPassData.transparencyDepthBuffer);
+		renderPassData.transparencyBucketingFramebuffer = createTransparencyFramebuffer();
 	}
 
 	void Context::initDemoScene(){
@@ -200,9 +220,15 @@ namespace TurnipRenderer{
 		}
 		scene.addObjectToEndOfRoot("Plane", glm::vec3(0,0,0))->mesh = planeMesh;
 
-		scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(0,0,2))->mesh = quad;
-		scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(0,0,4))->mesh = quad;
-		scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(0,0,6))->mesh = quad;
+		auto* plane1 = scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(0,0,2));
+		plane1->mesh = quad;
+		plane1->isOpaque = false;
+		auto* plane2 = scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(0,0,4));
+		plane2->mesh = quad;
+		plane2->isOpaque = false;
+		auto* plane3 = scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(0,0,6));
+		plane3->mesh = quad;
+		plane3->isOpaque = false;
 
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
@@ -211,7 +237,7 @@ namespace TurnipRenderer{
 		cameraData.depthMax = 10.f;
 		cameraData.updateProjectionMatrix();
 
-		debugProgram = resources.addResource(Shader(R"(
+		debugOpaqueProgram = resources.addResource(Shader(R"(
 #version 330 core
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_explicit_uniform_location : enable
@@ -237,6 +263,48 @@ layout(location = 0) out vec3 color;
 
 void main(){
     color = vertexColor;
+}
+)"));
+
+		debugTransparentProgram = resources.addResource(Shader(R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_uniform_location : enable
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
+
+layout(location = 0) uniform mat4 MVP;
+layout(location = 1) uniform float depthMin;
+layout(location = 2) uniform float depthMax;
+
+layout(location = 0) out float depth;
+
+void main() {
+    gl_Position = MVP * vec4(position, 1);
+    depth = (gl_Position.z - depthMin) / (depthMax - depthMin);
+}
+)", R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_uniform_location : enable
+
+layout(location = 3) uniform vec4 transparencyColor;
+
+layout(location = 0) in float depth;
+layout(location = 0) out vec4 bucket0;
+layout(location = 1) out vec4 bucket1;
+layout(location = 2) out vec4 bucket2;
+layout(location = 3) out vec4 bucket3;
+
+void main(){
+    uint bucketIndex = uint(clamp(depth, 0.0f, 1.0f) * 4u);
+    if (bucketIndex > 3u) bucketIndex = 3u;
+    bucket0 = (bucketIndex == 0u) ? transparencyColor : vec4(0);
+    bucket1 = (bucketIndex == 1u) ? transparencyColor : vec4(0);
+    bucket2 = (bucketIndex == 2u) ? transparencyColor : vec4(0);
+    bucket3 = (bucketIndex == 3u) ? transparencyColor : vec4(0);
 }
 )"));
 
@@ -273,7 +341,7 @@ layout(location = 0) in struct {
 layout(location = 0) out vec4 color;
 
 void main(){
-    color = texture(tex, IN.uv0);
+color = vec4(texture(tex, IN.uv0));
 }
 )"));
 
@@ -295,16 +363,21 @@ void main(){
 				done = true;
 		}
 
+		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
+		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
+		
 		// Draw to opaque framebuffer
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
 			glViewport(0,0, WIDTH,HEIGHT);
+			glClearColor(0,0,0.4f,0);
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glUseProgram(debugProgram->programId);
-			glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
-			glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
+			glUseProgram(debugOpaqueProgram->programId);
+
+			glDisable(GL_BLEND);
+			
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh){
+				if (entity->mesh && entity->isOpaque){
 					glm::mat4 MVP = transformProjectionFromWorld * entity->transformLocalSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 							   reinterpret_cast<const GLfloat*>(&MVP));
@@ -312,8 +385,31 @@ void main(){
 				}
 			}
 		}
-		// TODO: Draw to transparency buffer
-		{}
+		// Draw to transparency buffer
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.transparencyBucketingFramebuffer);
+			glViewport(0,0, WIDTH,HEIGHT);
+			glClearColor(0,0,0,0);
+			glClear(GL_COLOR_BUFFER_BIT);
+			glUseProgram(debugTransparentProgram->programId);
+
+			glDisable(GL_DEPTH_TEST);
+			glEnable(GL_BLEND);
+			glBlendFunc(GL_ONE, GL_ONE);
+
+			glUniform1f(1, cameraData.depthMin);
+			glUniform1f(2, cameraData.depthMax);
+
+			for (auto* entity : scene.heirarchy){
+				if (entity->mesh && !entity->isOpaque){
+					glm::mat4 MVP = transformProjectionFromWorld * entity->transformLocalSpaceFromModelSpace();
+					glUniformMatrix4fv(0, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&MVP));
+					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
+					drawMesh(*entity->mesh);
+				}
+			}
+		}
 		// TODO: Blend transparency buffer onto opaque buffer
 		{}
 		// Postprocessing Effects
@@ -323,7 +419,9 @@ void main(){
 			// Draw the final result to the screen
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0,0, WIDTH,HEIGHT);
-			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
+			glDisable(GL_BLEND);
+			//drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
+			drawQuad(*postProcessPassthrough, renderPassData.transparencyColorBucketBuffers[0]);
 		}
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;

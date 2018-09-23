@@ -39,7 +39,7 @@ namespace TurnipRenderer{
 			};
 				
 			GLuint opaqueDepthBuffer = 0;
-			GLuint transparencyColorBucketBuffer = 0;
+			GLuint transparencyColorBucketBuffers[4] = {0, 0, 0, 0};
 			GLuint transparencyDepthBuffer = 0;
 
 			GLuint opaqueFramebuffer = 0;
@@ -61,7 +61,8 @@ namespace TurnipRenderer{
 		SDL_GLContext openGlContext;
 
 		ResourceHandle<Mesh> quad;
-		ResourceHandle<Shader> debugProgram;
+		ResourceHandle<Shader> debugOpaqueProgram;
+		ResourceHandle<Shader> debugTransparentProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
 
 		void createFramebuffers();
