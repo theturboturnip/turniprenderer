@@ -17,7 +17,7 @@ namespace TurnipRenderer{
 	}
 	
 	void Context::initWindow(){
-		if (SDL_Init(SDL_INIT_EVERYTHING) != 0){
+		if (SDL_Init(SDL_INIT_VIDEO) != 0){
 			LogAvailableError();
 			return;
 		}
@@ -67,11 +67,11 @@ namespace TurnipRenderer{
 	}
 
 	void Context::createFramebuffers(){
-		auto createColorBuffer = [](GLint internalFormat, GLenum format) -> GLuint {
+		auto createColorBuffer = [](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT) -> GLuint {
 			GLuint colorBuffer;
 			glGenTextures(1, &colorBuffer);
 			glBindTexture(GL_TEXTURE_2D, colorBuffer);
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, WIDTH, HEIGHT, 0, format, GL_FLOAT, nullptr);
+			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, WIDTH, HEIGHT, 0, format, type, nullptr);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
 			return colorBuffer;
@@ -103,7 +103,7 @@ namespace TurnipRenderer{
 
 		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
 		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
-		renderPassData.transparencyColorBucketBuffer = createColorBuffer(GL_RGBA32F, GL_RGBA);
+		renderPassData.transparencyColorBucketBuffer = createColorBuffer(GL_RGBA32UI, GL_RGBA, GL_UNSIGNED_INT);
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
 		renderPassData.transparencyDepthBuffer = createDepthBuffer();
 		
@@ -200,6 +200,10 @@ namespace TurnipRenderer{
 		}
 		scene.addObjectToEndOfRoot("Plane", glm::vec3(0,0,0))->mesh = planeMesh;
 
+		scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(0,0,2))->mesh = quad;
+		scene.addObjectToEndOfRoot("Transparent Plane #2", glm::vec3(0,0,4))->mesh = quad;
+		scene.addObjectToEndOfRoot("Transparent Plane #3", glm::vec3(0,0,6))->mesh = quad;
+
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
 		cameraData.fovDegrees = 60;
@@ -272,6 +276,8 @@ void main(){
     color = texture(tex, IN.uv0);
 }
 )"));
+
+		
 	}
 
 	void Context::CameraData::updateProjectionMatrix(){
@@ -296,11 +302,12 @@ void main(){
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 			glUseProgram(debugProgram->programId);
 			glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
-			glm::mat4 MVP = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
-			glUniformMatrix4fv(0, 1, GL_FALSE,
-							   reinterpret_cast<const GLfloat*>(&MVP));
+			glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh){
+					glm::mat4 MVP = transformProjectionFromWorld * entity->transformLocalSpaceFromModelSpace();
+					glUniformMatrix4fv(0, 1, GL_FALSE,
+							   reinterpret_cast<const GLfloat*>(&MVP));
 					drawMesh(*entity->mesh);
 				}
 			}

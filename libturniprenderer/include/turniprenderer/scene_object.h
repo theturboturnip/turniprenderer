@@ -29,6 +29,8 @@ namespace TurnipRenderer {
 		Scene::NodeData nodeData;
 
 		ResourceHandle<Mesh> mesh;
+		bool isOpaque = true;
+		glm::vec4 transparentColor;
 	};
 	
 }
