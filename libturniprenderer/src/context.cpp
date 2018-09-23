@@ -125,7 +125,7 @@ namespace TurnipRenderer{
 		renderPassData.transparencyColorBucketBuffers[2] = createColorBuffer(GL_RGBA8, GL_RGBA);
 		renderPassData.transparencyColorBucketBuffers[3] = createColorBuffer(GL_RGBA8, GL_RGBA);
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
-		renderPassData.transparencyDepthBuffer = createDepthBuffer();
+		renderPassData.transparencyDepthBuffer = renderPassData.opaqueDepthBuffer;//createDepthBuffer();
 		
 		renderPassData.opaqueFramebuffer = createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
 		renderPassData.postProcessingFramebuffers[0] = createFramebuffer(renderPassData.postProcessBuffers[0]);
@@ -226,7 +226,7 @@ namespace TurnipRenderer{
 		plane1->transparencyColor = glm::vec4(1, 0.1, 0.1, 0.5);
 		auto* plane2 = scene.addObjectToEndOfObject(*plane1, "Transparent Plane #2", glm::vec3(0.25,0,2));
 		plane2->mesh = quad;
-		plane2->isOpaque = false;
+		//plane2->isOpaque = false;
 		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
 		/**/
 		auto* plane3 = scene.addObjectToEndOfObject(*plane2, "Transparent Plane #3", glm::vec3(0.25,0,2));
@@ -400,11 +400,16 @@ void main(){
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
 			glViewport(0,0, WIDTH,HEIGHT);
+			// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
 			glClearColor(1,0.5,1,0);
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glUseProgram(debugOpaqueProgram->programId);
 
 			glDisable(GL_BLEND);
+			
+			glEnable(GL_DEPTH_TEST);
+			glDepthMask(GL_TRUE);
+			
+			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+			glUseProgram(debugOpaqueProgram->programId);
 			
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
@@ -423,10 +428,12 @@ void main(){
 			glClear(GL_COLOR_BUFFER_BIT);
 			glUseProgram(debugTransparentProgram->programId);
 
-			glDisable(GL_DEPTH_TEST);
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_ONE, GL_ONE);
 
+			glEnable(GL_DEPTH_TEST);
+			glDepthMask(GL_FALSE);
+			
 			glUniform1f(1, cameraData.depthMin);
 			glUniform1f(2, cameraData.depthMax);
 
@@ -444,24 +451,29 @@ void main(){
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
 			glViewport(0,0, WIDTH,HEIGHT);
+			
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+			
+			glDisable(GL_DEPTH_TEST);
+			glDepthMask(GL_FALSE);
+
 			drawQuadAdvanced(*transparencyResolve, [this]() {
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[0]);
-						glUniform1i(0, 0); // Bind uniform 0 to texture 0
-
-						glActiveTexture(GL_TEXTURE1);
-						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[1]);
-						glUniform1i(1, 1); // Bind uniform 0 to texture 0
-
-						glActiveTexture(GL_TEXTURE2);
-						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[2]);
-						glUniform1i(2, 2); // Bind uniform 0 to texture 0
-
-						glActiveTexture(GL_TEXTURE3);
-						glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[3]);
-						glUniform1i(3, 3); // Bind uniform 0 to texture 0
+					glActiveTexture(GL_TEXTURE0);
+					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[0]);
+					glUniform1i(0, 0); // Bind uniform 0 to texture 0
+					
+					glActiveTexture(GL_TEXTURE1);
+					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[1]);
+					glUniform1i(1, 1); // Bind uniform 0 to texture 0
+					
+					glActiveTexture(GL_TEXTURE2);
+					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[2]);
+					glUniform1i(2, 2); // Bind uniform 0 to texture 0
+					
+					glActiveTexture(GL_TEXTURE3);
+					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[3]);
+					glUniform1i(3, 3); // Bind uniform 0 to texture 0
 				});
 		}
 		// Postprocessing Effects
@@ -471,9 +483,15 @@ void main(){
 			// Draw the final result to the screen
 			glBindFramebuffer(GL_FRAMEBUFFER, 0);
 			glViewport(0,0, WIDTH,HEIGHT);
+			
 			glDisable(GL_BLEND);
+			
+			glDisable(GL_DEPTH_TEST);
+			glDepthMask(GL_FALSE);
+
 			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 		}
+		LogAvailableError();
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
 	}
