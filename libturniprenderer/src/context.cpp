@@ -175,7 +175,7 @@ namespace TurnipRenderer{
 			quad = resources.addResource(Mesh(quadData));
 		}
 		
-		ResourceHandle<Mesh> planeMesh;
+		/*ResourceHandle<Mesh> planeMesh;
 		{
 			Mesh::MeshData planeData;
 			const auto planeNormal = glm::normalize(glm::vec3(0, 1, 1));
@@ -228,11 +228,12 @@ namespace TurnipRenderer{
 		plane2->mesh = quad;
 		//plane2->isOpaque = false;
 		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
-		/**/
 		auto* plane3 = scene.addObjectToEndOfObject(*plane2, "Transparent Plane #3", glm::vec3(0.25,0,2));
 		plane3->mesh = quad;
 		plane3->isOpaque = false;
-		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);
+		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);*/
+
+		scene.addModel("assets/sponza/sponza.fbx");
 
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 

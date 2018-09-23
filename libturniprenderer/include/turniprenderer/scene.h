@@ -3,6 +3,7 @@
 #include <list>
 #include <vector>
 #include <memory>
+#include <string>
 
 #include "context_aware.h"
 #include "memory/heirarchy.h"
@@ -17,6 +18,8 @@ namespace TurnipRenderer {
 		Scene(Context& context);
 		using Heirarchy<Entity>::NodeData;
 		using Heirarchy<Entity>::heirarchy;
+
+		void addModel(std::string path);
 		
 		template<typename... Args>
 		Entity* addObjectToEndOfRoot(Args... args){

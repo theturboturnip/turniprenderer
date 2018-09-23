@@ -19,6 +19,7 @@ namespace TurnipRenderer {
 			std::vector<GLuint> indices;
 		};
 		Mesh(MeshData data);
+		Mesh(MeshData&& data);
 		void createBuffer();
 
 		// Gets the buffer
