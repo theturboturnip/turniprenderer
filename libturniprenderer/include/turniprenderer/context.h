@@ -16,6 +16,19 @@ namespace TurnipRenderer{
 		ResourceManager<Mesh, Shader> resources;
 		Scene scene;
 
+		struct CameraData {
+			float fovDegrees;
+			float depthMin;
+			float depthMax;
+			void updateProjectionMatrix();
+			const inline glm::mat4& getTransformProjectionFromView(){
+				return transformProjectionFromView;
+			}
+			
+		private:
+			glm::mat4 transformProjectionFromView = glm::mat4(1.0f);
+		} cameraData;
+
 		Context(std::string name);
 		~Context();
 		bool renderFrame();

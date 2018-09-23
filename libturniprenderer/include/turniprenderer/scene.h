@@ -41,6 +41,7 @@ namespace TurnipRenderer {
 		}
 		//void queueObjectForDeleting(SceneObject& sceneObject);
 
+		Entity* camera = nullptr;
 	private:
 		//void clearDeletionQueue();
 				

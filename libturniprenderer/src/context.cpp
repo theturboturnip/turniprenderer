@@ -108,6 +108,13 @@ namespace TurnipRenderer{
 		}
 		scene.addObjectToEndOfRoot("Plane", glm::vec3(0,0,0))->mesh = planeMesh;
 
+		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
+
+		cameraData.fovDegrees = 60;
+		cameraData.depthMin = 0.1f;
+		cameraData.depthMax = 10.f;
+		cameraData.updateProjectionMatrix();
+
 		debugProgram = resources.addResource(Shader(R"(
 #version 330 core
 #extension GL_ARB_explicit_uniform_location : enable
@@ -136,6 +143,10 @@ void main(){
 )"));
 	}
 
+	void Context::CameraData::updateProjectionMatrix(){
+		transformProjectionFromView = glm::perspective(glm::radians(fovDegrees), WIDTH/(1.0f * HEIGHT), depthMin, depthMax);
+	}
+
 	bool Context::renderFrame(){
 		bool done = false;
 		SDL_Event event;
@@ -149,9 +160,8 @@ void main(){
 
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		glUseProgram(debugProgram->programId);
-		static glm::mat4 transformProjectionFromView = glm::perspective(glm::radians(60.0f), WIDTH/(1.0f * HEIGHT), 0.1f, 10.f);
-		static glm::mat4 transformViewFromWorld = glm::translate(glm::mat4(1.0), glm::vec3(0,0,-1));
-		static glm::mat4 MVP = transformProjectionFromView * transformViewFromWorld;
+		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transformLocalSpaceFromModelSpace());
+		glm::mat4 MVP = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		glUniformMatrix4fv(0, 1, GL_FALSE,
 						   reinterpret_cast<const GLfloat*>(&MVP));
 		for (auto* entity : scene.heirarchy){
