@@ -56,7 +56,7 @@ namespace TurnipRenderer {
 			bool parentInvalidated = false;
 		} transform;
 
-		Entity(Context& context, Scene& scene, std::string&& name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(), glm::vec3 localScale = glm::vec3(1))
+		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(), glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name), transform(*this, localPosition, localRotation, localScale) {}
 
 		void initialize();
