@@ -266,7 +266,8 @@ layout(location = 0) out vec3 vertexColor;
 
 void main() {
     gl_Position = MVP * vec4(position, 1);
-    vertexColor = vec3(gl_Position.z / 50);
+    //vertexColor = vec3(gl_Position.z / 100);
+    vertexColor = vec3(uv0.x, uv0.y, 0);
 }
 )", R"(
 #version 330 core
@@ -403,8 +404,17 @@ void main(){
 				done = true;
 			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
 				done = true;
-			else if (event.type == SDL_MOUSEMOTION){
-				if (event.motion.state & SDL_BUTTON_RMASK){
+			else if (event.type == SDL_MOUSEMOTION && !io->WantCaptureMouse){
+				if (event.motion.state & SDL_BUTTON_LMASK){
+					glm::vec3 localPosDelta = glm::vec3(
+						-static_cast<float>(event.motion.xrel) / 10.0f,
+						static_cast<float>(event.motion.yrel) / 10.0f,
+						0);
+					localPosDelta = scene.camera->transform.localRotation() * localPosDelta;
+					scene.camera->transform.setLocalPosition(
+						scene.camera->transform.localPosition() + localPosDelta
+						);
+				}else if (event.motion.state & SDL_BUTTON_RMASK){
 					auto currentEulerAngles = scene.camera->transform.localEulerAnglesDegrees();
 					float xRotDelta = static_cast<float>(event.motion.yrel) / 10.0f;
 					currentEulerAngles.x += xRotDelta;
@@ -412,6 +422,17 @@ void main(){
 					currentEulerAngles.y += yRotDelta;
 					scene.camera->transform.setLocalEulerAnglesDegrees(currentEulerAngles);
 				}
+			}else if (event.type == SDL_MOUSEWHEEL && !io->WantCaptureMouse){
+				float scrollAmount = -static_cast<float>(event.wheel.y);
+				if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) scrollAmount = -scrollAmount;
+				glm::vec3 localPosDelta = glm::vec3(
+					0,
+					0,
+					scrollAmount);
+				localPosDelta = scene.camera->transform.localRotation() * localPosDelta;
+				scene.camera->transform.setLocalPosition(
+					scene.camera->transform.localPosition() + localPosDelta
+					);
 			}
 		}
 
