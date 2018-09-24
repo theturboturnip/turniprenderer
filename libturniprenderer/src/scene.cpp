@@ -54,7 +54,7 @@ namespace TurnipRenderer {
 			glm::vec3 localPosition = glmFromAssimpVec(assimpLocalPosition);
 			glm::quat localRotation = glm::quat(assimpLocalRotation.w, assimpLocalRotation.x, assimpLocalRotation.y, assimpLocalRotation.z);
 			glm::vec3 localScale = glm::vec3(assimpLocalScale.x, assimpLocalScale.y, assimpLocalScale.z);
-			Entity* entity = addObjectToEndOfRoot(std::string(toDo.item->mName.C_Str()), localPosition, localRotation, localScale);
+			Entity* entity = addObjectToEndOfObject(*toDo.nodeParent, std::string(toDo.item->mName.C_Str()), localPosition, localRotation, localScale);
 
 			// TODO: Add Meshes
 			{}

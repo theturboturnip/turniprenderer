@@ -31,8 +31,14 @@ namespace TurnipRenderer {
 			bool operator == (ConstRawNodeRef rawRef) const {
 				return internal == rawRef;
 			}
+			bool operator == (const Node* ptr) const {
+				return *internal == ptr;
+			}
 			bool operator != (ConstRawNodeRef rawRef) const {
 				return !this->operator==(rawRef);
+			}
+			bool operator != (const Node* ptr) const {
+				return !this->operator==(ptr);
 			}
 			NodeRef& operator = (RawNodeRef rawRef) {
 				internal = rawRef;
@@ -85,7 +91,7 @@ namespace TurnipRenderer {
 				return cachedEndMinus1 + 1;
 			}
 			//private:
-			Heirarchy<Node>* heirarchy = nullptr;
+			//Heirarchy<Node>* heirarchy = nullptr;
 			NodeRef me;
 			NodeRef parent;
 			std::vector<NodeRef> children;
@@ -114,8 +120,8 @@ namespace TurnipRenderer {
 		
 		inline NodeRef nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex){
 			if (siblingIndex > 0)
-				return parent->nodeData.children[siblingIndex - 1];
-			return parent;
+				return parent->nodeData.children[siblingIndex - 1]->nodeData.end();
+			return parent + 1;
 		}
 		
 		// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
@@ -131,8 +137,8 @@ namespace TurnipRenderer {
 		
 		// Utility function to use when reparenting nodes
 		inline void moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
-			if (newLocation + 1 == toMove->nodeData.begin()) return;
-			heirarchy.splice(newLocation + 1, // This is the "element BEFORE which the content will be inserted", the newLocation is the element AFTER which the content should be inserted
+			if (newLocation == toMove->nodeData.begin()) return;
+			heirarchy.splice(newLocation,
 							 heirarchy, // A std::list splicing itself is defined to work
 							 toMove->nodeData.begin(), toMove->nodeData.end());
 		}

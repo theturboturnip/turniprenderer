@@ -7,18 +7,6 @@
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) : name(std::move(name)), scene(*this) {}
-	Context::~Context(){
-		if (sdlWindow){
-			if (openGlContext){
-				ImGui_ImplOpenGL3_Shutdown();
-				ImGui::DestroyContext();
-				
-				SDL_GL_DeleteContext(openGlContext);
-			}
-			SDL_DestroyWindow(sdlWindow);
-			SDL_Quit();
-		}
-	}
 	
 	void Context::initWindow(){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -73,6 +61,18 @@ namespace TurnipRenderer{
 		ImGui_ImplSDL2_InitForOpenGL(sdlWindow, openGlContext);
 		ImGui_ImplOpenGL3_Init("#version 150");
 		ImGui::StyleColorsDark();
+	}
+	Context::~Context(){
+		if (sdlWindow){
+			if (openGlContext){
+				ImGui_ImplOpenGL3_Shutdown();
+				ImGui::DestroyContext();
+				
+				SDL_GL_DeleteContext(openGlContext);
+			}
+			SDL_DestroyWindow(sdlWindow);
+			SDL_Quit();
+		}
 	}
 
 	void Context::createFramebuffers(){
@@ -512,6 +512,25 @@ void main(){
 			ImGui::NewFrame();
 			
 			ImGui::ShowDemoWindow(nullptr);
+			if (ImGui::Begin("Scene Inspector", nullptr)){
+				auto iter = ++scene.heirarchy.begin();
+				while(iter != scene.heirarchy.end()){
+					Entity* entity = *iter;
+					assert(!scene.isRoot(entity));
+					
+					if (!ImGui::TreeNode((void*)entity->nodeData.siblingIndex, "%s", entity->name.c_str())){
+						iter = entity->nodeData.end();
+					}else{
+						if (entity->nodeData.children.size() == 0) ImGui::TreePop();
+						iter++;
+					}
+					if (!scene.isRoot(entity->nodeData.parent)
+						&& entity->nodeData.siblingIndex == entity->nodeData.parent->nodeData.children.size() - 1){
+						ImGui::TreePop();
+					}
+				}
+			}
+			ImGui::End();
 
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());

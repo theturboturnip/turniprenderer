@@ -10,13 +10,12 @@ namespace TurnipRenderer {
 		}else{
 			cachedEndMinus1 = children[children.size() - 1]->nodeData.cachedEndMinus1;
 		}
-		if ((Node*)me != heirarchy->root.get()) parent->nodeData.updateCachedEnd(); // Tail recursion, won't add to the stack
+		if (parent != me) parent->nodeData.updateCachedEnd(); // Tail recursion, won't add to the stack
 	}
 	
 	template<class Node>
 	Heirarchy<Node>::Heirarchy(std::unique_ptr<Node> newRoot) : root(std::move(newRoot)) {			
 		heirarchy.push_back(root.get());
-		root->nodeData.heirarchy = this;
 		root->nodeData.me = heirarchy.begin();
 		// This is meant to be meaningless data
 		root->nodeData.parent = root->nodeData.me;
@@ -30,9 +29,8 @@ namespace TurnipRenderer {
 		NodeRef newParent = (newParentPtr == nullptr) ? root->nodeData.me : newParentPtr->nodeData.me;
 		size_t newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
 
-		NodeRef addedNode = heirarchy.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex) + 1, nodeStoragePtr.get());
+		NodeRef addedNode = heirarchy.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex), nodeStoragePtr.get());
 		auto& nodeData = addedNode->nodeData;
-		nodeData.heirarchy = this;
 		nodeData.me = addedNode;
 		nodeData.parent = newParent;
 		nodeData.siblingIndex = newSiblingIndex;
