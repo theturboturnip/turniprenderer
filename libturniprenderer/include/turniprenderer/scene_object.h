@@ -57,7 +57,7 @@ namespace TurnipRenderer {
 		private:
 			inline glm::vec3 applyEulerAngles(glm::vec3 applyTo){
 				//applyTo = glm::rotateZ(applyTo, m_localEulerAngles.z);
-				//applyTo = glm::rotateX(applyTo, m_localEulerAngles.x);
+				applyTo = glm::rotateX(applyTo, m_localEulerAngles.x);
 				applyTo = glm::rotateY(applyTo, m_localEulerAngles.y);
 				return applyTo;
 			}

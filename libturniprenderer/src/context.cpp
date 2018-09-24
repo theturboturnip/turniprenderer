@@ -401,11 +401,21 @@ void main(){
 
 			if (event.type == SDL_QUIT)
 				done = true;
-			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
+			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
 				done = true;
+			else if (event.type == SDL_MOUSEMOTION){
+				if (event.motion.state & SDL_BUTTON_RMASK){
+					auto currentEulerAngles = scene.camera->transform.localEulerAnglesDegrees();
+					float xRotDelta = static_cast<float>(event.motion.yrel) / 10.0f;
+					currentEulerAngles.x += xRotDelta;
+					float yRotDelta = static_cast<float>(event.motion.xrel) / 10.0f;
+					currentEulerAngles.y += yRotDelta;
+					scene.camera->transform.setLocalEulerAnglesDegrees(currentEulerAngles);
+				}
+			}
 		}
 
-		scene.camera->transform.setLocalEulerAnglesDegrees(scene.camera->transform.localEulerAnglesDegrees() + glm::vec3(0, 1, 0));
+		
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		
