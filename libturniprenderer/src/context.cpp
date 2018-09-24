@@ -3,12 +3,16 @@
 #include <cstdio>
 
 #include "mesh.h"
+#include "private/utils/imgui.h"
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) : name(std::move(name)), scene(*this) {}
 	Context::~Context(){
 		if (sdlWindow){
 			if (openGlContext){
+				ImGui_ImplOpenGL3_Shutdown();
+				ImGui::DestroyContext();
+				
 				SDL_GL_DeleteContext(openGlContext);
 			}
 			SDL_DestroyWindow(sdlWindow);
@@ -58,12 +62,17 @@ namespace TurnipRenderer{
 		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
 		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
 
-		glClearColor(0.0f,0.0f,0.4f,0.0f);
 		LogAvailableError();
 
 		createFramebuffers();
-
 		LogAvailableError();
+
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		io = &ImGui::GetIO();
+		ImGui_ImplSDL2_InitForOpenGL(sdlWindow, openGlContext);
+		ImGui_ImplOpenGL3_Init("#version 150");
+		ImGui::StyleColorsDark();
 	}
 
 	void Context::createFramebuffers(){
@@ -388,6 +397,8 @@ void main(){
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
+			ImGui_ImplSDL2_ProcessEvent(&event);
+
 			if (event.type == SDL_QUIT)
 				done = true;
 			if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
@@ -493,6 +504,18 @@ void main(){
 			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 		}
 		LogAvailableError();
+
+		// ImGui
+		{
+			ImGui_ImplOpenGL3_NewFrame();
+			ImGui_ImplSDL2_NewFrame(sdlWindow);
+			ImGui::NewFrame();
+			
+			ImGui::ShowDemoWindow(nullptr);
+
+			ImGui::Render();
+			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+		}
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
 	}

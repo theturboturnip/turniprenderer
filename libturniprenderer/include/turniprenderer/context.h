@@ -8,6 +8,7 @@
 #include "scene.h"
 #include "shader.h"
 
+#include "private/utils/imgui.h"
 #include <SDL.h>
 
 namespace TurnipRenderer{
@@ -60,6 +61,7 @@ namespace TurnipRenderer{
 
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
+		ImGuiIO* io = nullptr;
 
 		ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugOpaqueProgram;
