@@ -27,8 +27,14 @@ namespace TurnipRenderer {
 		}
 
 		Entity* modelParent = nullptr;
+
+		auto glmFromAssimpVec = [](aiVector3D vec) -> glm::vec3 {
+			return glm::vec3(vec.x, vec.y, vec.z);
+		};
 		
-		auto createMeshFromAssimp = [this](aiMesh* mesh) -> ResourceHandle<Mesh> {};
+		/*auto createMeshFromAssimp = [this](aiMesh* mesh) -> ResourceHandle<Mesh> {
+			
+		  };*/
 		
 		struct QueueItem{
 			Entity* nodeParent;
@@ -41,11 +47,11 @@ namespace TurnipRenderer {
 			QueueItem toDo = nodesToTraverse.front();
 			nodesToTraverse.pop();
 
-			aiVector3t<float> assimpLocalPosition;
-			aiQuaterniont<float> assimpLocalRotation;
-			aiVector3t<float> assimpLocalScale;
+			aiVector3D assimpLocalPosition;
+			aiQuaternion assimpLocalRotation;
+			aiVector3D assimpLocalScale;
 			toDo.item->mTransformation.Decompose(assimpLocalScale, assimpLocalRotation, assimpLocalPosition);
-			glm::vec3 localPosition = glm::vec3(assimpLocalPosition.x, assimpLocalPosition.y, assimpLocalPosition.z);
+			glm::vec3 localPosition = glmFromAssimpVec(assimpLocalPosition);
 			glm::quat localRotation = glm::quat(assimpLocalRotation.w, assimpLocalRotation.x, assimpLocalRotation.y, assimpLocalRotation.z);
 			glm::vec3 localScale = glm::vec3(assimpLocalScale.x, assimpLocalScale.y, assimpLocalScale.z);
 			Entity* entity = addObjectToEndOfRoot(std::string(toDo.item->mName.C_Str()), localPosition, localRotation, localScale);
