@@ -181,7 +181,7 @@ namespace TurnipRenderer{
 				quadData.indices.push_back(3);
 			}
 
-			quad = resources.addResource(Mesh(quadData));
+			quad = resources.addResource(Mesh(std::move(quadData)));
 		}
 		
 		/*ResourceHandle<Mesh> planeMesh;
@@ -248,7 +248,7 @@ namespace TurnipRenderer{
 
 		cameraData.fovDegrees = 60;
 		cameraData.depthMin = 0.1f;
-		cameraData.depthMax = 10.f;
+		cameraData.depthMax = 1000.f;
 		cameraData.updateProjectionMatrix();
 
 		debugOpaqueProgram = resources.addResource(Shader(R"(

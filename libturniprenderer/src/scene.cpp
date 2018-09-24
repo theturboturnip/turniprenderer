@@ -26,48 +26,81 @@ namespace TurnipRenderer {
 			return;
 		}
 
-		Entity* modelParent = nullptr;
-
-		auto glmFromAssimpVec = [](aiVector3D vec) -> glm::vec3 {
+		auto glmFromAssimpVec2 = [](auto vec) -> glm::vec2 {
+			return glm::vec2(vec.x, vec.y);
+		};
+		auto glmFromAssimpVec3 = [](aiVector3D vec) -> glm::vec3 {
 			return glm::vec3(vec.x, vec.y, vec.z);
 		};
 		
-		/*auto createMeshFromAssimp = [this](aiMesh* mesh) -> ResourceHandle<Mesh> {
-			
-		  };*/
-		
-		struct QueueItem{
-			Entity* nodeParent;
-			aiNode* item;
-		};
-		std::queue<QueueItem> nodesToTraverse;
-		nodesToTraverse.push(QueueItem{Heirarchy<Entity>::root.get(), importedScene->mRootNode}); 
+		auto createMeshFromAssimp = [this, glmFromAssimpVec2, glmFromAssimpVec3](aiMesh* mesh) -> ResourceHandle<Mesh> {
+			Mesh::MeshData meshData;
 
-		while(!nodesToTraverse.empty()){
-			QueueItem toDo = nodesToTraverse.front();
-			nodesToTraverse.pop();
+			// Vertices
+			{
+				auto* assimpTangents = mesh->mTangents;
+				auto* assimpUV0 = mesh->mTextureCoords[0];
+				for (unsigned int i = 0; i < mesh->mNumVertices; i++){
+					Mesh::Vertex vertex;
+					vertex.position = glmFromAssimpVec3(mesh->mVertices[i]);
+					vertex.normal = glmFromAssimpVec3(mesh->mNormals[i]);
+					if (assimpTangents) vertex.tangent = glmFromAssimpVec3(assimpTangents[i]);
+					if (assimpUV0) vertex.uv0 = glmFromAssimpVec2(assimpUV0[i]);
+					meshData.vertices.push_back(vertex);
+				}
+			}
+
+			// Indices
+			for(unsigned int i = 0; i < mesh->mNumFaces; i++){
+				aiFace face = mesh->mFaces[i];
+				for(unsigned int j = 0; j < face.mNumIndices; j++)
+					meshData.indices.push_back(face.mIndices[j]);
+			}
+
+			return context.resources.addResource(Mesh(std::move(meshData)));
+		};
+		std::vector<ResourceHandle<Mesh>> meshes(importedScene->mNumMeshes);
+		for (unsigned int i = 0; i < meshes.size(); i++){
+			meshes[i] = createMeshFromAssimp(importedScene->mMeshes[i]);
+		}
+
+		Entity* modelParent = nullptr;
+				
+		struct QueueItem{
+			Entity* parentEntity;
+			aiNode* node;
+		};
+		std::queue<QueueItem> workQueue;
+		workQueue.push(QueueItem{Heirarchy<Entity>::root.get(), importedScene->mRootNode}); 
+
+		while(!workQueue.empty()){
+			QueueItem workItem = workQueue.front();
+			workQueue.pop();
 
 			aiVector3D assimpLocalPosition;
 			aiQuaternion assimpLocalRotation;
 			aiVector3D assimpLocalScale;
-			toDo.item->mTransformation.Decompose(assimpLocalScale, assimpLocalRotation, assimpLocalPosition);
-			glm::vec3 localPosition = glmFromAssimpVec(assimpLocalPosition);
+			workItem.node->mTransformation.Decompose(assimpLocalScale, assimpLocalRotation, assimpLocalPosition);
+			glm::vec3 localPosition = glmFromAssimpVec3(assimpLocalPosition);
 			glm::quat localRotation = glm::quat(assimpLocalRotation.w, assimpLocalRotation.x, assimpLocalRotation.y, assimpLocalRotation.z);
-			glm::vec3 localScale = glm::vec3(assimpLocalScale.x, assimpLocalScale.y, assimpLocalScale.z);
-			Entity* entity = addObjectToEndOfObject(*toDo.nodeParent, std::string(toDo.item->mName.C_Str()), localPosition, localRotation, localScale);
+			glm::vec3 localScale = glmFromAssimpVec3(assimpLocalScale);
+			Entity* entity = addObjectToEndOfObject(*workItem.parentEntity, std::string(workItem.node->mName.C_Str()), localPosition, localRotation, localScale);
 
-			// TODO: Add Meshes
-			{}
+			// Add Meshes
+			for(unsigned int i = 0; i < workItem.node->mNumMeshes; i++){
+				Entity* meshOwner = (i == 0) ? entity : addObjectToEndOfObject(*entity, "Mesh" + i, glm::vec3(0));
+				meshOwner->mesh = meshes[workItem.node->mMeshes[i]];
+			}
 			
 			// Add the children to the queue
-			for(unsigned int i = 0; i < toDo.item->mNumChildren; i++){
-				nodesToTraverse.push(QueueItem{
+			for(unsigned int i = 0; i < workItem.node->mNumChildren; i++){
+				workQueue.push(QueueItem{
 						entity,
-							toDo.item->mChildren[i]
+							workItem.node->mChildren[i]
 							});
 			}
 
-			if (toDo.item == importedScene->mRootNode) modelParent = entity;
+			if (workItem.node == importedScene->mRootNode) modelParent = entity;
 
 		}
 
