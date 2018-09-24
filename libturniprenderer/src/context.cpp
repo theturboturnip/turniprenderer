@@ -248,7 +248,7 @@ namespace TurnipRenderer{
 
 		cameraData.fovDegrees = 60;
 		cameraData.depthMin = 0.1f;
-		cameraData.depthMax = 1000.f;
+		cameraData.depthMax = 500.f;
 		cameraData.updateProjectionMatrix();
 
 		debugOpaqueProgram = resources.addResource(Shader(R"(
@@ -266,7 +266,7 @@ layout(location = 0) out vec3 vertexColor;
 
 void main() {
     gl_Position = MVP * vec4(position, 1);
-    vertexColor = vec3(uv0.x, uv0.y, 1);
+    vertexColor = vec3(gl_Position.z / 50);
 }
 )", R"(
 #version 330 core
@@ -405,6 +405,7 @@ void main(){
 				done = true;
 		}
 
+		scene.camera->transform.setLocalEulerAnglesDegrees(scene.camera->transform.localEulerAnglesDegrees() + glm::vec3(0, 1, 0));
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		

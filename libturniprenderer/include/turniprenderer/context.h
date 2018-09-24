@@ -47,6 +47,9 @@ namespace TurnipRenderer{
 			GLuint opaqueFramebuffer = 0;
 			GLuint postProcessingFramebuffers[2] = {0, 0};
 			GLuint transparencyBucketingFramebuffer = 0;
+
+			// This is to make clang happy, the union means it deletes the default constructor
+			RenderPassData() : colorBuffer(0), dummy(0) {}
 		} renderPassData;
 
 		Context(std::string name);

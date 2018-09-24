@@ -88,7 +88,7 @@ namespace TurnipRenderer {
 
 			// Add Meshes
 			for(unsigned int i = 0; i < workItem.node->mNumMeshes; i++){
-				Entity* meshOwner = (i == 0) ? entity : addObjectToEndOfObject(*entity, "Mesh" + i, glm::vec3(0));
+				Entity* meshOwner = (i == 0) ? entity : addObjectToEndOfObject(*entity, "Mesh" + std::to_string(i), glm::vec3(0));
 				meshOwner->mesh = meshes[workItem.node->mMeshes[i]];
 			}
 			
@@ -103,6 +103,7 @@ namespace TurnipRenderer {
 			if (workItem.node == importedScene->mRootNode) modelParent = entity;
 
 		}
+		modelParent->transform.setLocalScale(glm::vec3(0.001));
 
 		// TODO: Clean this up
 		//aiReleaseImport(importedScene);
