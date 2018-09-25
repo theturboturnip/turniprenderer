@@ -395,7 +395,7 @@ void main(){
 
 	bool Context::renderFrame(){
 		bool done = false;
-		input.perFrame.reset();
+		input.onFrameStart();
 		SDL_Event event;
 		while (SDL_PollEvent(&event))
 		{
@@ -443,6 +443,18 @@ void main(){
 					input.perFrame.mouse.scrollAmount = -static_cast<float>(event.wheel.y);
 					if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
 						input.perFrame.mouse.scrollAmount = -input.perFrame.mouse.scrollAmount;
+				}else if (event.type == SDL_MOUSEBUTTONDOWN){
+					if (event.button.button == SDL_BUTTON_LEFT){
+						input.mouse.leftButton.press();
+					}else if (event.button.button == SDL_BUTTON_RIGHT){
+						input.mouse.rightButton.press();
+					}
+				}else if (event.type == SDL_MOUSEBUTTONUP){
+					if (event.button.button == SDL_BUTTON_LEFT){
+						input.mouse.leftButton.release();
+					}else if (event.button.button == SDL_BUTTON_RIGHT){
+						input.mouse.rightButton.release();
+					}
 				}
 			}
 		}
@@ -577,6 +589,8 @@ void main(){
 
 			if (ImGui::Begin("Input", nullptr)){
 				ImGui::Text("Mouse Pos: %f %f", input.mouse.pos.x, input.mouse.pos.y);
+				ImGui::Text("LMB: %d", input.mouse.leftButton.getState());
+				ImGui::Text("RMB: %d", input.mouse.rightButton.getState());
 				ImGui::Text("Per-Frame");
 				{
 					ImGui::Indent();
