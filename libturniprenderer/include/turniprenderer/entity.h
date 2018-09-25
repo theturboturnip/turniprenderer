@@ -43,7 +43,7 @@ namespace TurnipRenderer {
 		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
 		std::vector<std::unique_ptr<Component>> components;
 
-		Transform& transform; // Will always exist, but 
+		Transform& transform;
 	};
 	
 }
