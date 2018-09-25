@@ -158,41 +158,14 @@ namespace TurnipRenderer {
 	private:
 		// These don't need to be in the .impl file, because they only deal in NodeRefs
 		
-		inline size_t getRealSiblingIndex(NodeRef newParent, int relSiblingIndex){
-			const int newSiblingCount = static_cast<int>(newParent->children.size());
-			if (newSiblingCount == 0) return 0;
-			
-			if (relSiblingIndex > newSiblingCount) relSiblingIndex %= newSiblingCount;
-			while (relSiblingIndex < 0) relSiblingIndex += newSiblingCount + 1;
-			
-			return static_cast<size_t>(relSiblingIndex);
-		}
+		inline size_t getRealSiblingIndex(NodeRef newParent, int relSiblingIndex);
 		
-		inline NodeRef nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex){
-			if (siblingIndex > 0)
-				return parent->children[siblingIndex - 1]->getAsNodeBase().heirarchyEnd();
-			return parent.plusOne();
-		}
+		inline NodeRef nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex);
 		
 		// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
-		inline void updateNodeParent(NodeRef parent, size_t siblingIndex){
-			auto& siblings = parent->getAsNodeBase().children;
-			if (siblingIndex >= siblings.size() - 1)
-				parent->getAsNodeBase().updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
-			// Update new siblings that have changed
-			for (size_t i = siblingIndex; i < siblings.size(); i++) {
-				siblings[i]->getAsNodeBase().siblingIndex = i;
-			}
-		}
+		inline void updateNodeParent(NodeRef parent, size_t siblingIndex);
 		
 		// Utility function to use when reparenting nodes
-		inline void moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
-			if (newLocation == toMove->getAsNodeBase().heirarchyBegin()) return;
-			heirarchy.splice(newLocation,
-							 heirarchy, // A std::list splicing itself is defined to work
-							 toMove->getAsNodeBase().heirarchyBegin(), toMove->getAsNodeBase().heirarchyEnd());
-		}
+		inline void moveNodeAndChildren(NodeRef toMove, NodeRef newLocation);
 	};
 }
-
-#include "heirarchy.impl"

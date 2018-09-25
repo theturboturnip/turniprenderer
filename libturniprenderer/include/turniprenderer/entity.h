@@ -1,6 +1,7 @@
 #pragma once
 
 #include "scene.h"
+#include "component.h"
 #include "context_scene_aware.h"
 #include "engine_fwd.h"
 #include "private/external/glm.h"
@@ -100,6 +101,7 @@ namespace TurnipRenderer {
 		ResourceHandle<Mesh> mesh;
 		bool isOpaque = true;
 		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
+		std::vector<std::unique_ptr<Component>> components;
 	};
 	
 }

@@ -26,6 +26,45 @@ namespace TurnipRenderer {
 	}
 
 	template<class Node>
+	inline size_t Heirarchy<Node>::getRealSiblingIndex(NodeRef newParent, int relSiblingIndex){
+		const int newSiblingCount = static_cast<int>(newParent->children.size());
+		if (newSiblingCount == 0) return 0;
+			
+		if (relSiblingIndex > newSiblingCount) relSiblingIndex %= newSiblingCount;
+		while (relSiblingIndex < 0) relSiblingIndex += newSiblingCount + 1;
+			
+		return static_cast<size_t>(relSiblingIndex);
+	}
+		
+	template<class Node>
+	inline typename Heirarchy<Node>::NodeRef Heirarchy<Node>::nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex){
+		if (siblingIndex > 0)
+			return parent->children[siblingIndex - 1]->getAsNodeBase().heirarchyEnd();
+		return parent.plusOne();
+	}
+		
+	// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
+	template<class Node>
+	inline void Heirarchy<Node>::updateNodeParent(NodeRef parent, size_t siblingIndex){
+		auto& siblings = parent->getAsNodeBase().children;
+		if (siblingIndex >= siblings.size() - 1)
+			parent->getAsNodeBase().updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
+		// Update new siblings that have changed
+		for (size_t i = siblingIndex; i < siblings.size(); i++) {
+			siblings[i]->getAsNodeBase().siblingIndex = i;
+		}
+	}
+		
+	// Utility function to use when reparenting nodes
+	template<class Node>
+	inline void Heirarchy<Node>::moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
+		if (newLocation == toMove->getAsNodeBase().heirarchyBegin()) return;
+		heirarchy.splice(newLocation,
+						 heirarchy, // A std::list splicing itself is defined to work
+						 toMove->getAsNodeBase().heirarchyBegin(), toMove->getAsNodeBase().heirarchyEnd());
+	}
+
+	template<class Node>
 	typename Heirarchy<Node>::NodeRef Heirarchy<Node>::addNode(std::unique_ptr<Node> nodeStoragePtr, Node* newParentPtr, int relSiblingIndex){
 		NodeRef newParent = (newParentPtr == nullptr) ? root->getAsNodeBase().me : newParentPtr->getAsNodeBase().me;
 		size_t newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);

@@ -10,12 +10,14 @@
 
 namespace TurnipRenderer {
 	class Entity;
+	class SystemBase;
 
 	// This is a bad comment to be writing, although it would be a funny example for the start of a talk
 	// TODO: Thread Safety
 	class Scene : ContextAware, Heirarchy<Entity> {
 	public:
 		Scene(Context& context);
+		~Scene();
 		using Heirarchy<Entity>::NodeBase;
 		using Heirarchy<Entity>::heirarchy;
 
@@ -46,7 +48,10 @@ namespace TurnipRenderer {
 
 		Entity* camera = nullptr;
 
+		std::vector<std::unique_ptr<SystemBase>> systems;
+
 		// TODO: Entity Deletion
+		
 	};
 }
 #include "entity.h"

@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "entity.h"
 #include "mesh.h"
 #include "private/external/imgui.h"
 

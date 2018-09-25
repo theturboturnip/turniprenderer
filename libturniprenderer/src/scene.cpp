@@ -11,12 +11,14 @@
 #include "entity.h"
 #include "mesh.h"
 #include "resource.h"
+#include "system.h"
 
 namespace TurnipRenderer {
 	Scene::Scene(Context& context) : ContextAware(context), Heirarchy<Entity>(
 		std::make_unique<Entity>(context, *this, "ROOT", glm::vec3(0))
 		){
 	}
+	Scene::~Scene() = default;
 
 	void Scene::addModel(std::string path){
 		Assimp::Importer importer;
