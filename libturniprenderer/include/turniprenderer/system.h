@@ -91,6 +91,7 @@ namespace TurnipRenderer {
 		
 		static_assert(std::is_base_of<ComponentSet<>, InputStorage>::value);
 		static_assert(std::is_base_of<ComponentSet<>, OutputStorage>::value);
+		static_assert(!std::is_same<ComponentSet<>, OutputStorage>::value, "A system must output something!");
 	public:
 		using Inputs = typename InputStorage::template ConstPointerContainerType<ComponentContainerType>;
 		using Outputs = typename OutputStorage::template PointerContainerType<ComponentContainerType>;
