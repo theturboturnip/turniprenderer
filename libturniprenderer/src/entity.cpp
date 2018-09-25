@@ -1,4 +1,4 @@
-#include "scene_object.h"
+#include "entity.h"
 
 namespace TurnipRenderer {
 	void Entity::Transform::updateMatrices(){

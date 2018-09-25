@@ -8,7 +8,7 @@
 #include "assimp/postprocess.h"
 
 #include "context.h"
-#include "scene_object.h"
+#include "entity.h"
 #include "mesh.h"
 #include "resource.h"
 

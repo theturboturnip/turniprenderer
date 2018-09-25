@@ -1,6 +1,6 @@
 #include "turniprenderer/context.h"
 #include "turniprenderer/scene.h"
-#include "turniprenderer/scene_object.h"
+#include "turniprenderer/entity.h"
 
 #include <iostream>
 

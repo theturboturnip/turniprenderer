@@ -1,9 +1,6 @@
 #include "mesh.h"
 
 namespace TurnipRenderer {
-	/*Mesh::Mesh(MeshData data) : data(data) {
-		createBuffer(); // TODO: Is doing this in the constructor bad?
-		}*/
 	Mesh::Mesh(MeshData&& data) : data(data) {
 		createBuffer(); // TODO: Is doing this in the constructor bad?
 	}

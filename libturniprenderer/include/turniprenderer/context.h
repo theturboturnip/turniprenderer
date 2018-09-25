@@ -8,7 +8,7 @@
 #include "scene.h"
 #include "shader.h"
 
-#include "private/utils/imgui.h"
+#include "private/external/imgui.h"
 #include <SDL.h>
 
 namespace TurnipRenderer{

@@ -3,7 +3,7 @@
 #include <cstdio>
 
 #include "mesh.h"
-#include "private/utils/imgui.h"
+#include "private/external/imgui.h"
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) : name(std::move(name)), scene(*this) {}

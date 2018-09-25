@@ -1,7 +1,7 @@
 #pragma once
 
-#include "glm.h"
-#include "private/utils/gl.h"
+#include "private/external/glm.h"
+#include "private/external/gl.h"
 
 #include <vector>
 

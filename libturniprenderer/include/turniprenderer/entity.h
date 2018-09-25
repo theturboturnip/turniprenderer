@@ -3,7 +3,7 @@
 #include "scene.h"
 #include "context_scene_aware.h"
 #include "engine_fwd.h"
-#include "glm.h"
+#include "private/external/glm.h"
 
 #include "mesh.h"
 #include "resource.h"
@@ -56,7 +56,7 @@ namespace TurnipRenderer {
 			}
 		private:
 			inline glm::vec3 applyEulerAngles(glm::vec3 applyTo){
-				//applyTo = glm::rotateZ(applyTo, m_localEulerAngles.z);
+				applyTo = glm::rotateZ(applyTo, m_localEulerAngles.z);
 				applyTo = glm::rotateX(applyTo, m_localEulerAngles.x);
 				applyTo = glm::rotateY(applyTo, m_localEulerAngles.y);
 				return applyTo;

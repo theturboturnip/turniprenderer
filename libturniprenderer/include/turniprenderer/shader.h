@@ -1,6 +1,6 @@
 #pragma once
 
-#include "private/utils/gl.h"
+#include "private/external/gl.h"
 
 #include <string>
 
