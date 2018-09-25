@@ -1,6 +1,8 @@
 #pragma once
 
 #include "engine_fwd.h"
+#include "context_aware.h"
+#include "entity.h"
 
 namespace TurnipRenderer {
 	template<class... Ts>
@@ -9,9 +11,13 @@ namespace TurnipRenderer {
 	class ComponentSet<> {
 	public:
 		static void addOwnedComponent(Component* component, size_t& count){}
+		static bool entityHasAllComponents(Entity* entity){
+			return true;
+		}
 	};
 	template<class T, class... TRemaining>
 	class ComponentSet<T, TRemaining...> : ComponentSet<TRemaining...> {
+	public:
 		static_assert(std::is_base_of<Component, T>::value, "ComponentSet contains a type that isn't a component!");
 		
 		static bool ownsAComponent(Entity* entity){
@@ -29,13 +35,17 @@ namespace TurnipRenderer {
 		}
 	};
 
-	class SystemBase {
+	class SystemBase : protected ContextAware {
 	public:
+		SystemBase(Context& context) : ContextAware(context) {}
+		
 		virtual bool runOnEntityIfValid(Entity*) = 0;
-		virtual ~SystemBase();
+		virtual ~SystemBase() = default;
 	};
 	template<class InputStorage, class OutputStorage>
 	class System : public SystemBase {
+		using SystemBase::SystemBase;
+		
 		static_assert(std::is_base_of<ComponentSet<>, InputStorage>::value);
 		static_assert(std::is_base_of<ComponentSet<>, OutputStorage>::value);
 	public:

@@ -2,6 +2,9 @@
 
 #include "turniprenderer/context.h"
 
+#include "free_camera/component.h"
+#include "free_camera/system.h"
+
 int main(){
 
 	/*std::cout << "\n||| Testing ResourceManager |||\n";
@@ -15,7 +18,9 @@ int main(){
 	TurnipRenderer::Context context("TEST");
 	context.initWindow();
 	context.initDemoScene();
-
+	context.scene.camera->components.push_back(std::make_unique<FreeCameraComponent>());
+	context.scene.systems.push_back(std::make_unique<FreeCameraSystem>(context));
+	
 	while (!context.renderFrame()) {}
 			
 	return 0;

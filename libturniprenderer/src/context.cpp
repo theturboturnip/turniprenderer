@@ -4,6 +4,7 @@
 
 #include "entity.h"
 #include "mesh.h"
+#include "system.h"
 #include "private/external/imgui.h"
 
 namespace TurnipRenderer{
@@ -409,38 +410,11 @@ void main(){
 
 			if (!io->WantCaptureMouse){
 				if (event.type == SDL_MOUSEMOTION){
-					if (event.motion.state & SDL_BUTTON_LMASK){
-						glm::vec3 localPosDelta = glm::vec3(
-							-static_cast<float>(event.motion.xrel) / 10.0f,
-							static_cast<float>(event.motion.yrel) / 10.0f,
-							0);
-						localPosDelta = scene.camera->transform.localRotation() * localPosDelta;
-						scene.camera->transform.setLocalPosition(
-							scene.camera->transform.localPosition() + localPosDelta
-							);
-					}else if (event.motion.state & SDL_BUTTON_RMASK){
-						auto currentEulerAngles = scene.camera->transform.localEulerAnglesDegrees();
-						float xRotDelta = static_cast<float>(event.motion.yrel) / 10.0f;
-						currentEulerAngles.x += xRotDelta;
-						float yRotDelta = static_cast<float>(event.motion.xrel) / 10.0f;
-						currentEulerAngles.y += yRotDelta;
-						scene.camera->transform.setLocalEulerAnglesDegrees(currentEulerAngles);
-					}
 					input.perFrame.mouse.deltaPos.x = static_cast<float>(event.motion.xrel);
 					input.perFrame.mouse.deltaPos.y = static_cast<float>(event.motion.yrel);
 					input.mouse.pos.x = event.motion.x;
 					input.mouse.pos.y = event.motion.y;
 				}else if (event.type == SDL_MOUSEWHEEL){
-					float scrollAmount = -static_cast<float>(event.wheel.y);
-					if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) scrollAmount = -scrollAmount;
-					glm::vec3 localPosDelta = glm::vec3(
-						0,
-						0,
-						scrollAmount);
-					localPosDelta = scene.camera->transform.localRotation() * localPosDelta;
-					scene.camera->transform.setLocalPosition(
-						scene.camera->transform.localPosition() + localPosDelta
-					);
 					input.perFrame.mouse.scrollAmount = -static_cast<float>(event.wheel.y);
 					if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
 						input.perFrame.mouse.scrollAmount = -input.perFrame.mouse.scrollAmount;
@@ -460,6 +434,11 @@ void main(){
 			}
 		}
 
+		for(const auto& system : scene.systems){
+			for (Entity* entity : scene.heirarchy){
+				system->runOnEntityIfValid(entity);
+			}
+		}
 		
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
