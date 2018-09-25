@@ -16,15 +16,8 @@ namespace TurnipRenderer {
 	class Scene : ContextAware, Heirarchy<Entity> {
 	public:
 		Scene(Context& context);
-		using Heirarchy<Entity>::NodeData;
+		using Heirarchy<Entity>::NodeBase;
 		using Heirarchy<Entity>::heirarchy;
-
-		inline bool isRoot(Entity* entity){
-			return entity == root.get();
-		}
-		inline bool isRoot(Heirarchy<Entity>::NodeRef entity){
-			return entity == root.get();
-		}
 
 		void addModel(std::string path);
 		

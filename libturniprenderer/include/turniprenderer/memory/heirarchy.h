@@ -3,7 +3,6 @@
 #include <assert.h>
 
 namespace TurnipRenderer {
-
 	// NOT THREAD SAFE
 	// TODO: Clean up NodeRef and NodeData. NodeRef probably shouldn't be used externally, and there should be a better way to integrate NodeData into the class.
 	template<class Node>
@@ -28,75 +27,126 @@ namespace TurnipRenderer {
 			NodeRef() = default;
 			NodeRef(RawNodeRef internal) : internal(internal){}
 
-			bool operator == (ConstRawNodeRef rawRef) const {
+			bool operator == (RawNodeRef rawRef) const {
 				return internal == rawRef;
+			}
+   			bool operator != (RawNodeRef rawRef) const {
+				return !this->operator==(rawRef);
 			}
 			bool operator == (const Node* ptr) const {
 				return *internal == ptr;
 			}
-			bool operator != (ConstRawNodeRef rawRef) const {
-				return !this->operator==(rawRef);
-			}
 			bool operator != (const Node* ptr) const {
 				return !this->operator==(ptr);
 			}
+			bool operator == (const NodeRef& other) const {
+				return internal == other.internal;
+			}
+			bool operator != (const NodeRef& other) const {
+				return !this->operator==(other);
+			}
+			
 			NodeRef& operator = (RawNodeRef rawRef) {
 				internal = rawRef;
 				return *this;
 			}
 			
-			Node& operator *(){
+			Node& operator *() const {
 				return **internal;
 			}
-			Node* operator ->(){
+			Node* operator ->() const {
 				return *internal;
 			}
 			NodeRef& operator ++(){
 				internal++;
 				return *this;
 			}
-			/*NodeRef operator ++() const {
-				return NodeRef(RawNodeRef(internal)++);
-				}*/
 			NodeRef operator ++(int dummy) const {
-				return (*this) + 1;
+				return plusOne();
 			}
-			NodeRef operator +(int i) const {
-				// Assume i == 1 for now
-				assert(i == 1);
-
+			NodeRef& operator --(){
+				internal--;
+				return *this;
+			}
+			NodeRef operator --(int dummy) const {
 				auto newInternal = internal;
-				return NodeRef(++newInternal);
+				return NodeRef(--newInternal);
 			}
-			explicit operator Node* (){
+			explicit operator Node* () const {
 				return *internal;
 			}
-			operator RawNodeRef(){
+			operator RawNodeRef() const {
 				return internal;
 			}
-			operator ConstRawNodeRef(){
+			operator ConstRawNodeRef() const {
 				return internal;
+			}
+		protected:
+			friend class Heirarchy<Node>;
+			NodeRef plusOne() const {
+				auto newInternal = internal;
+				return NodeRef(++newInternal);
 			}
 		private:
 			RawNodeRef internal;
 		};
 		
-		class NodeData {
-			friend class Heirarchy<Node>;
-		public:	
-			inline NodeRef begin() const {
+		class NodeBase {
+		public:
+			struct HeirarchyIter {
+				inline NodeRef begin() const {
+					return parent.heirarchyBegin();
+				}
+				inline NodeRef end() const {
+					return parent.heirarchyEnd();
+				}
+			private:
+				friend class NodeBase;
+				HeirarchyIter(const NodeBase& parent) : parent(parent) {}
+				const NodeBase& parent;
+			};
+			inline HeirarchyIter subentities() const {
+				return HeirarchyIter(*this);
+			}
+			
+			inline NodeRef heirarchyBegin() const {
 				return me;
 			}
-			inline NodeRef end() const {
-				return cachedEndMinus1 + 1;
+			inline NodeRef heirarchyEnd() const {
+				return cachedEndMinus1.plusOne();
 			}
-			//private:
-			//Heirarchy<Node>* heirarchy = nullptr;
+
+			inline bool isRoot() const {
+				return me == parent;
+			}
+
+			inline Node& getParent() const {
+				return *parent;
+			}
+			inline const auto& getChildren() const {
+				return children;
+			}
+			inline const auto getSiblingIndex() const {
+				return siblingIndex;
+			}
+
+			virtual ~NodeBase() = default;
+			
+		protected:
+			friend class Heirarchy<Node>;
+
+			virtual void initialize() = 0;
+			virtual void onReparent(){};
+
+			inline NodeBase& getAsNodeBase(){
+				return *this;
+			}
+			
 			NodeRef me;
 			NodeRef parent;
 			std::vector<NodeRef> children;
 			size_t siblingIndex;
-
+			
 			// We don't cache the actual end, we cache it's value -1, which will always be consistent even if the node is reparented.
 			NodeRef cachedEndMinus1;
 			void updateCachedEnd(bool updateParent = true);
@@ -109,7 +159,7 @@ namespace TurnipRenderer {
 		// These don't need to be in the .impl file, because they only deal in NodeRefs
 		
 		inline size_t getRealSiblingIndex(NodeRef newParent, int relSiblingIndex){
-			const int newSiblingCount = static_cast<int>(newParent->nodeData.children.size());
+			const int newSiblingCount = static_cast<int>(newParent->children.size());
 			if (newSiblingCount == 0) return 0;
 			
 			if (relSiblingIndex > newSiblingCount) relSiblingIndex %= newSiblingCount;
@@ -120,27 +170,29 @@ namespace TurnipRenderer {
 		
 		inline NodeRef nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex){
 			if (siblingIndex > 0)
-				return parent->nodeData.children[siblingIndex - 1]->nodeData.end();
-			return parent + 1;
+				return parent->children[siblingIndex - 1]->getAsNodeBase().heirarchyEnd();
+			return parent.plusOne();
 		}
 		
 		// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
 		inline void updateNodeParent(NodeRef parent, size_t siblingIndex){
-			auto& siblings = parent->nodeData.children;
+			auto& siblings = parent->getAsNodeBase().children;
 			if (siblingIndex >= siblings.size() - 1)
-				parent->nodeData.updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
+				parent->getAsNodeBase().updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
 			// Update new siblings that have changed
 			for (size_t i = siblingIndex; i < siblings.size(); i++) {
-				siblings[i]->nodeData.siblingIndex = i;
+				siblings[i]->getAsNodeBase().siblingIndex = i;
 			}
 		}
 		
 		// Utility function to use when reparenting nodes
 		inline void moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
-			if (newLocation == toMove->nodeData.begin()) return;
+			if (newLocation == toMove->getAsNodeBase().heirarchyBegin()) return;
 			heirarchy.splice(newLocation,
 							 heirarchy, // A std::list splicing itself is defined to work
-							 toMove->nodeData.begin(), toMove->nodeData.end());
+							 toMove->getAsNodeBase().heirarchyBegin(), toMove->getAsNodeBase().heirarchyEnd());
 		}
 	};
 }
+
+#include "heirarchy.impl"

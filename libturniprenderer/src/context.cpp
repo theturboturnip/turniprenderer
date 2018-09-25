@@ -548,16 +548,16 @@ void main(){
 				auto iter = ++scene.heirarchy.begin();
 				while(iter != scene.heirarchy.end()){
 					Entity* entity = *iter;
-					assert(!scene.isRoot(entity));
+					assert(!entity->isRoot());
 					
-					if (!ImGui::TreeNode((void*)entity->nodeData.siblingIndex, "%s", entity->name.c_str())){
-						iter = entity->nodeData.end();
+					if (!ImGui::TreeNode((void*)entity->getSiblingIndex(), "%s", entity->name.c_str())){
+						iter = entity->heirarchyEnd();
 					}else{
-						if (entity->nodeData.children.size() == 0) ImGui::TreePop();
+						if (entity->getChildren().size() == 0) ImGui::TreePop();
 						iter++;
 					}
-					if (!scene.isRoot(entity->nodeData.parent)
-						&& entity->nodeData.siblingIndex == entity->nodeData.parent->nodeData.children.size() - 1){
+					if (!entity->getParent().isRoot()
+						&& entity->getSiblingIndex() == entity->getParent().getChildren().size() - 1){
 						ImGui::TreePop();
 					}
 				}

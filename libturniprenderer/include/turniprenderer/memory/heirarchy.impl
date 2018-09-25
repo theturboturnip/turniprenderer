@@ -4,38 +4,39 @@
 
 namespace TurnipRenderer {
 	template<class Node>
-	void Heirarchy<Node>::NodeData::updateCachedEnd(bool updateParent){
+	void Heirarchy<Node>::NodeBase::updateCachedEnd(bool updateParent){
 		if (children.size() == 0){
 			cachedEndMinus1 = me;
 		}else{
-			cachedEndMinus1 = children[children.size() - 1]->nodeData.cachedEndMinus1;
+			cachedEndMinus1 = children[children.size() - 1]->getAsNodeBase().cachedEndMinus1;
 		}
-		if (parent != me) parent->nodeData.updateCachedEnd(); // Tail recursion, won't add to the stack
+		if (parent != me) parent->getAsNodeBase().updateCachedEnd(); // Tail recursion, won't add to the stack
 	}
 	
 	template<class Node>
 	Heirarchy<Node>::Heirarchy(std::unique_ptr<Node> newRoot) : root(std::move(newRoot)) {			
 		heirarchy.push_back(root.get());
-		root->nodeData.me = heirarchy.begin();
+		NodeBase& nodeData = root->getAsNodeBase();
+		nodeData.me = heirarchy.begin();
 		// This is meant to be meaningless data
-		root->nodeData.parent = root->nodeData.me;
-		root->nodeData.siblingIndex = 0;
-		root->nodeData.updateCachedEnd(false); // Don't update the parent
-		root->initialize();
+		nodeData.parent = nodeData.me;
+		nodeData.siblingIndex = 0;
+		nodeData.updateCachedEnd(false); // Don't update the parent
+		root->initialize(); // Use the virtual function
 	}
 
 	template<class Node>
 	typename Heirarchy<Node>::NodeRef Heirarchy<Node>::addNode(std::unique_ptr<Node> nodeStoragePtr, Node* newParentPtr, int relSiblingIndex){
-		NodeRef newParent = (newParentPtr == nullptr) ? root->nodeData.me : newParentPtr->nodeData.me;
+		NodeRef newParent = (newParentPtr == nullptr) ? root->getAsNodeBase().me : newParentPtr->getAsNodeBase().me;
 		size_t newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
 
 		NodeRef addedNode = heirarchy.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex), nodeStoragePtr.get());
-		auto& nodeData = addedNode->nodeData;
+		NodeBase& nodeData = addedNode->getAsNodeBase();
 		nodeData.me = addedNode;
 		nodeData.parent = newParent;
 		nodeData.siblingIndex = newSiblingIndex;
 		nodeData.updateCachedEnd(false); // Don't update the parent, it will be done in updateNodeParent if necessary
-		auto& newSiblings = newParent->nodeData.children;
+		auto& newSiblings = newParent->getAsNodeBase().children;
 		newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
 		updateNodeParent(nodeData.parent, nodeData.siblingIndex);
 
@@ -52,14 +53,14 @@ namespace TurnipRenderer {
 	void Heirarchy<Node>::reparentNode(Node& node, Node& newParentNode, int relSiblingIndex){
 		if (&node == root.get()) return;
 			
-		auto& nodeData = node.nodeData;
-		auto& newParent = newParentNode.nodeData.me;
+		auto& nodeData = node.getAsNodeBase();
+		auto& newParent = newParentNode.getAsNodeBase().me;
 		auto newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
 
 		// Update old stuff
 		{
 			// Update old parent
-			auto& oldSiblings = nodeData.parent->nodeData.children;
+			auto& oldSiblings = nodeData.parent->getAsNodeBase().children;
 			oldSiblings.erase(oldSiblings.begin() + nodeData.siblingIndex);
 			updateNodeParent(nodeData.parent, nodeData.siblingIndex);
 		}
@@ -71,7 +72,7 @@ namespace TurnipRenderer {
 
 		// Update new parent
 		{
-			auto& newSiblings = newParent->nodeData.children;
+			auto& newSiblings = newParent->getAsNodeBase().children;
 			newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
 			updateNodeParent(nodeData.parent, nodeData.siblingIndex);
 		}

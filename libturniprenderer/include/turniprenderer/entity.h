@@ -10,8 +10,7 @@
 
 namespace TurnipRenderer {
 
-	class Entity : ContextSceneAware {
-		friend class Heirarchy<Entity>;
+	class Entity : ContextSceneAware, public Scene::NodeBase {
 	public:
 		std::string name;
 
@@ -69,7 +68,7 @@ namespace TurnipRenderer {
 			}
 			inline void invalidateLocal(){
 				localInvalidated = true;
-				for (Entity& subentity : entity.nodeData){
+				for (Entity& subentity : entity.subentities()){
 					subentity.transform.parentInvalidated = true;
 				}
 			}
@@ -94,13 +93,10 @@ namespace TurnipRenderer {
 		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::vec3 localEulerAnglesDegrees, glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name), transform(*this, localPosition, localEulerAnglesDegrees, localScale) {}
 
-		void initialize();
-
-		// TODO: Invalidate on reparent
-
-		//private:
-		Scene::NodeData nodeData;
-
+		void initialize() override;
+		// TODO: Invalidate transform on reparent
+		void onReparent() override {}
+		
 		ResourceHandle<Mesh> mesh;
 		bool isOpaque = true;
 		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
