@@ -3,7 +3,8 @@
 #include "turniprenderer/context.h"
 #include "turniprenderer/entity.h"
 
-void FreeCameraSystem::runOnEntity(TurnipRenderer::Entity* camera){
+void FreeCameraSystem::runOnEntity(TurnipRenderer::Entity* camera, const System::Inputs inputs, const System::Outputs outputs){
+	// TODO: Use the data in the input
 	glm::vec3 localPosDelta = glm::vec3(
 		0,
 		0,
