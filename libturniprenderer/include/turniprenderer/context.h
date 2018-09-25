@@ -7,6 +7,7 @@
 #include "engine_fwd.h"
 #include "scene.h"
 #include "shader.h"
+#include "input.h"
 
 #include "private/external/imgui.h"
 #include <SDL.h>
@@ -57,11 +58,17 @@ namespace TurnipRenderer{
 		bool renderFrame();
 		void initDemoScene();
 		void initWindow();
+
+		inline const Input& getInput(){
+			return input;
+		}
 		
 	private:
 		constexpr static size_t WIDTH = 1280;
 		constexpr static size_t HEIGHT = 720;
 
+		Input input;
+		
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
 		ImGuiIO* io = nullptr;
