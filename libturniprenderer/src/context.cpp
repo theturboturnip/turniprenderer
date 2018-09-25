@@ -425,10 +425,10 @@ void main(){
 						currentEulerAngles.y += yRotDelta;
 						scene.camera->transform.setLocalEulerAnglesDegrees(currentEulerAngles);
 					}
-					input.perFrame.mouse.deltaX = event.motion.xrel;
-					input.perFrame.mouse.deltaY = event.motion.yrel;
-					input.mouse.x = event.motion.x;
-					input.mouse.y = event.motion.y;
+					input.perFrame.mouse.deltaPos.x = static_cast<float>(event.motion.xrel);
+					input.perFrame.mouse.deltaPos.y = static_cast<float>(event.motion.yrel);
+					input.mouse.pos.x = event.motion.x;
+					input.mouse.pos.y = event.motion.y;
 				}else if (event.type == SDL_MOUSEWHEEL){
 					float scrollAmount = -static_cast<float>(event.wheel.y);
 					if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED) scrollAmount = -scrollAmount;
@@ -554,7 +554,7 @@ void main(){
 			ImGui_ImplSDL2_NewFrame(sdlWindow);
 			ImGui::NewFrame();
 			
-			ImGui::ShowDemoWindow(nullptr);
+			//ImGui::ShowDemoWindow(nullptr);
 			if (ImGui::Begin("Scene Inspector", nullptr)){
 				auto iter = ++scene.heirarchy.begin();
 				while(iter != scene.heirarchy.end()){
@@ -575,6 +575,18 @@ void main(){
 			}
 			ImGui::End();
 
+			if (ImGui::Begin("Input", nullptr)){
+				ImGui::Text("Mouse Pos: %f %f", input.mouse.pos.x, input.mouse.pos.y);
+				ImGui::Text("Per-Frame");
+				{
+					ImGui::Indent();
+					ImGui::Text("Delta Pos: %f %f", input.perFrame.mouse.deltaPos.x, input.perFrame.mouse.deltaPos.y);
+					ImGui::Text("Delta Scroll: %f", input.perFrame.mouse.scrollAmount);
+					ImGui::Unindent();
+				}
+			}
+			ImGui::End();
+			
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
 		}

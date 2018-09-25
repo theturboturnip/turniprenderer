@@ -1,5 +1,7 @@
 #pragma once
 
+#include "private/external/glm.h"
+
 namespace TurnipRenderer {
 	class Context;
 	
@@ -7,8 +9,7 @@ namespace TurnipRenderer {
 	public:
 		struct {
 			struct {
-				int deltaX = 0;
-				int deltaY = 0;
+				glm::vec2 deltaPos = glm::vec2(0);
 
 				float scrollAmount = 0;
 			} mouse;
@@ -16,15 +17,13 @@ namespace TurnipRenderer {
 		private:
 			friend class Context;
 			void reset(){
-				mouse.deltaX = 0;
-				mouse.deltaY = 0;
+				mouse.deltaPos = glm::vec2(0);
 				mouse.scrollAmount = 0;
 			}
 		} perFrame;
 		
 		struct {
-			int x = 0;
-			int y = 0;
+			glm::vec2 pos;
 		} mouse;
 	};
 };
