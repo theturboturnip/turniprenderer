@@ -15,4 +15,13 @@ namespace TurnipRenderer {
 	void Entity::initialize(){
 		transform.initialize();
 	}
+
+	template<>
+	Transform* Entity::getComponent<Transform>(){
+		return &transform;
+	}
+	template<>
+	Scene* Entity::getComponent<Scene>(){
+		return &scene;
+	}
 }

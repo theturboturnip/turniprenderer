@@ -65,16 +65,12 @@ namespace TurnipRenderer {
 		// TODO: Find a way to do this without the bool Const
 		template<class SelectedContainerType, bool Const>
 		static inline bool fillContainer(Entity* entity, SelectedContainerType& container){
-			for (const auto& component : entity->components){
-				T* convertedPtr = dynamic_cast<T*>(component.get());
-				if (convertedPtr != nullptr){
-					std::get<
-						typename std::add_pointer<typename apply_if<std::add_const, T, Const>::type>::type
-						>(container) = convertedPtr;
-					return ComponentSet<TRemaining...>::fillContainer(entity, container);
-				}
-			}
-			return false;
+			using PointerType = typename std::add_pointer<typename apply_if<std::add_const, T, Const>::type>::type;
+			PointerType componentPtr = entity->getComponent<T>();
+			if (componentPtr == nullptr)
+				return false;
+			std::get<PointerType>(container) = componentPtr;
+			return ComponentSet<TRemaining...>::fillContainer(entity, container);
 		}
 	};
 

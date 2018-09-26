@@ -18,7 +18,7 @@ int main(){
 	TurnipRenderer::Context context("TEST");
 	context.initWindow();
 	context.initDemoScene();
-	context.scene.camera->components.push_back(std::make_unique<FreeCameraComponent>());
+	context.scene.camera->addComponent<FreeCameraComponent>();
 	context.scene.systems.push_back(std::make_unique<FreeCameraSystem>(context));
 	
 	while (!context.renderFrame()) {}
