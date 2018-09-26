@@ -6,20 +6,19 @@
 #include <string>
 
 #include "context_aware.h"
-#include "memory/heirarchy.h"
+#include "data/hierarchy.h"
+
+#include "impl/scene_heirarchy_base.h"
+#include "entity.h"
 
 namespace TurnipRenderer {
-	class Entity;
-	class SystemBase;
-
+	
 	// This is a bad comment to be writing, although it would be a funny example for the start of a talk
 	// TODO: Thread Safety
-	class Scene : ContextAware, Heirarchy<Entity> {
+	class Scene : ContextAware, Impl::SceneHeirarchyBase {
 	public:
 		Scene(Context& context);
 		~Scene();
-		using Heirarchy<Entity>::NodeBase;
-		using Heirarchy<Entity>::heirarchy;
 
 		void addModel(std::string path);
 		
@@ -54,5 +53,3 @@ namespace TurnipRenderer {
 		
 	};
 }
-#include "entity.h"
-#include "memory/heirarchy.impl"

@@ -4,8 +4,7 @@
 #include <functional>
 
 #include "resource_manager.h"
-#include "engine_fwd.h"
-#include "scene.h"
+#include "ecs/scene.h"
 #include "shader.h"
 #include "input.h"
 

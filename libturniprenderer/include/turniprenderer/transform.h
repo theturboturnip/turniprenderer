@@ -1,8 +1,10 @@
 #pragma once
 
-#include "component.h"
+#include "ecs/component.h"
 
 namespace TurnipRenderer {
+	class Entity;
+	
 	class Transform : public Component {
 	public:
 		Transform(Entity& entity, glm::vec3 lp, glm::quat lr, glm::vec3 ls)

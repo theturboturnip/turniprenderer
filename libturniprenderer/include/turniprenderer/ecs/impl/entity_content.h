@@ -1,9 +1,7 @@
 #pragma once
 
-#include "scene.h"
-#include "component.h"
+#include "ecs/component.h"
 #include "context_scene_aware.h"
-#include "engine_fwd.h"
 #include "private/external/glm.h"
 
 #include "mesh.h"
@@ -12,22 +10,25 @@
 
 #include <typeindex>
 #include <unordered_map>
+#include <memory>
 
-namespace TurnipRenderer {	
-	class Entity : ContextSceneAware, public Scene::NodeBase {
+namespace TurnipRenderer {
+	class Entity;
+	
+	class EntityContent : ContextSceneAware {
 	public:
 		std::string name;
 
-		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(1, 0, 0, 0), glm::vec3 localScale = glm::vec3(1))
+		EntityContent(Entity& entity, Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(1, 0, 0, 0), glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name),
-			  transform(*this, localPosition, localRotation, localScale){}
-		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::vec3 localEulerAnglesDegrees, glm::vec3 localScale = glm::vec3(1))
+			  transform(entity, localPosition, localRotation, localScale){}
+		EntityContent(Entity& entity, Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::vec3 localEulerAnglesDegrees, glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name),
-			  transform(*this, localPosition, localEulerAnglesDegrees, localScale){}
+			  transform(entity, localPosition, localEulerAnglesDegrees, localScale){}
 
-		void initialize() override;
+		void initialize();
 		// TODO: Invalidate transform on reparent
-		void onReparent() override {}
+		void onReparent() {}
 
 		template<class ComponentType>
 		ComponentType* getComponent(){
@@ -56,7 +57,7 @@ namespace TurnipRenderer {
 }
 
 #include "transform.h"
-#include "scene.h"
+#include "ecs/scene.h"
 
 namespace TurnipRenderer {
 	template<>
