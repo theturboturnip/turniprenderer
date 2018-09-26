@@ -71,16 +71,22 @@ namespace TurnipRenderer {
 	public:
 		using Inputs = typename InputStorage::template PointerContainerType<ComponentContainerType>;
 		using Outputs = typename OutputStorage::template PointerContainerType<ComponentContainerType>;
-
+		
 		bool runOnEntityIfValid(Entity* entity) override {
 			Inputs inputs;
 			Outputs outputs;
-			if (!InputStorage::template fillContainer<Inputs>(entity, inputs)) return false;
-			if (!OutputStorage::template fillContainer<Outputs>(entity, outputs)) return false;
+			if (!InputStorage::fillContainer(entity, inputs)) return false;
+			if (!OutputStorage::fillContainer(entity, outputs)) return false;
 			runOnEntity(entity, inputs, outputs);
 			return true;
 		}
 	protected:
+		template<class ComponentPtrType, class StorageType>
+		inline ComponentPtrType getComponent(const StorageType& storage){
+			static_assert(is_component_type<typename std::remove_pointer<ComponentPtrType>::type>::value);
+			return std::get<ComponentPtrType>(storage);
+		}
+		
 		virtual void runOnEntity(Entity*, const Inputs, const Outputs) = 0;
 	};
 };

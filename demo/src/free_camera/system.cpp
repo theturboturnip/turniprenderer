@@ -5,7 +5,7 @@
 
 void FreeCameraSystem::runOnEntity(TurnipRenderer::Entity* shouldBeUnused, const System::Inputs inputs, const System::Outputs outputs){
 	// TODO: Use the data in the input
-	TurnipRenderer::Transform& transform = *std::get<TurnipRenderer::Transform*>(outputs);
+	TurnipRenderer::Transform& transform = *getComponent<TurnipRenderer::Transform*>(outputs);
 	glm::vec3 localPosDelta = glm::vec3(
 		0,
 		0,
