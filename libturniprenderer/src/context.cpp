@@ -2,6 +2,7 @@
 
 #include <cstdio>
 
+#include "assets/asset_manager.h"
 #include "entity.h"
 #include "mesh.h"
 #include "system.h"
@@ -63,6 +64,8 @@ namespace TurnipRenderer{
 		ImGui_ImplSDL2_InitForOpenGL(sdlWindow, openGlContext);
 		ImGui_ImplOpenGL3_Init("#version 150");
 		ImGui::StyleColorsDark();
+
+		debugShaders.createShaders();
 	}
 	Context::~Context(){
 		if (sdlWindow){
@@ -253,40 +256,7 @@ namespace TurnipRenderer{
 		cameraData.depthMax = 500.f;
 		cameraData.updateProjectionMatrix();
 
-		debugOpaqueProgram = resources.addResource(Shader(R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_explicit_uniform_location : enable
-layout(location = 0) in vec3 position;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec3 tangent;
-layout(location = 3) in vec2 uv0;
-
-layout(location = 0) uniform mat4 MVP;
-
-layout(location = 0) out vec3 vertexColor;
-
-void main() {
-    gl_Position = MVP * vec4(position, 1);
-    //vertexColor = vec3(gl_Position.z / 100);
-    vertexColor = vec3(uv0.x, uv0.y, 0);
-}
-)", R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
-layout(location = 0) in vec3 vertexColor;
-layout(location = 0) out vec3 color;
-
-void main(){
-    color = vertexColor;
-}
-)"));
-
 		debugTransparentProgram = resources.addResource(Shader(R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_explicit_uniform_location : enable
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -303,10 +273,6 @@ void main() {
     depth = (gl_Position.z - depthMin) / (depthMax - depthMin);
 }
 )", R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-#extension GL_ARB_explicit_uniform_location : enable
-
 layout(location = 3) uniform vec4 transparencyColor;
 
 layout(location = 0) in float depth;
@@ -326,9 +292,6 @@ void main(){
 )"));
 
 		std::string passthroughVertexShader = R"(
-#version 330 core
-#extension GL_ARB_separate_shader_objects : enable
-
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -345,10 +308,6 @@ void main(){
 )";
 		postProcessPassthrough = resources.addResource(Shader(passthroughVertexShader,
 															  R"(
-#version 330 core
-#extension GL_ARB_explicit_uniform_location : enable
-#extension GL_ARB_separate_shader_objects : enable
-
 layout(location = 0) uniform sampler2D tex;
 
 layout(location = 0) in struct {
@@ -364,10 +323,6 @@ color = vec4(texture(tex, IN.uv0));
 
 		transparencyResolve = resources.addResource(Shader(passthroughVertexShader,
 															  R"(
-#version 330 core
-#extension GL_ARB_explicit_uniform_location : enable
-#extension GL_ARB_separate_shader_objects : enable
-
 layout(location = 0) uniform sampler2D bucket0;
 layout(location = 1) uniform sampler2D bucket1;
 layout(location = 2) uniform sampler2D bucket2;
@@ -410,12 +365,12 @@ void main(){
 
 			if (!io->WantCaptureMouse){
 				if (event.type == SDL_MOUSEMOTION){
-					input.perFrame.mouse.deltaPos.x = static_cast<float>(event.motion.xrel);
-					input.perFrame.mouse.deltaPos.y = static_cast<float>(event.motion.yrel);
+					input.perFrame.mouse.deltaPos.x += static_cast<float>(event.motion.xrel);
+					input.perFrame.mouse.deltaPos.y += static_cast<float>(event.motion.yrel);
 					input.mouse.pos.x = event.motion.x;
 					input.mouse.pos.y = event.motion.y;
 				}else if (event.type == SDL_MOUSEWHEEL){
-					input.perFrame.mouse.scrollAmount = -static_cast<float>(event.wheel.y);
+					input.perFrame.mouse.scrollAmount += -static_cast<float>(event.wheel.y);
 					if (event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED)
 						input.perFrame.mouse.scrollAmount = -input.perFrame.mouse.scrollAmount;
 				}else if (event.type == SDL_MOUSEBUTTONDOWN){
@@ -456,7 +411,7 @@ void main(){
 			glDepthMask(GL_TRUE);
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glUseProgram(debugOpaqueProgram->programId);
+			glUseProgram(debugShaders.debugOpaqueShader->programId);
 			
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){

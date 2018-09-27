@@ -3,6 +3,7 @@
 #include "private/external/gl.h"
 
 #include <string>
+#include <memory>
 
 namespace TurnipRenderer {
 	class Shader {
@@ -12,5 +13,11 @@ namespace TurnipRenderer {
 	private:
 		GLuint vertexId;
 		GLuint fragmentId;
+	};
+	class DebugShaders {
+	public:
+		std::unique_ptr<Shader> debugOpaqueShader = nullptr;
+
+		void createShaders();
 	};
 };

@@ -3,8 +3,48 @@
 #include <vector>
 
 namespace TurnipRenderer {
+	void DebugShaders::createShaders(){
+		debugOpaqueShader = std::make_unique<Shader>(R"(
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
+
+
+layout(location = 0) uniform mat4 MVP;
+
+layout(location = 0) out vec2 interpolatedUV;
+
+void main() {
+    gl_Position = MVP * vec4(position, 1);
+    interpolatedUV = uv0;
+}
+)", R"(
+layout(location = 0) in vec2 interpolatedUV;
+layout(location = 0) out vec3 color;
+
+void main(){
+    ivec2 gridCoords = ivec2(interpolatedUV * 10);
+    bool xCoord = gridCoords.x % 2 == 1;
+    bool yCoord = gridCoords.y % 2 == 1;
+    if (xCoord ^^ yCoord) {
+        color = vec3(1,0,1);
+    }else{
+        color = vec3(0,0,0);
+    }
+}
+)"
+			);
+	}
+	
+	static std::string ShaderPrefix = R"(
+#version 330 core
+#extension GL_ARB_separate_shader_objects : enable
+#extension GL_ARB_explicit_uniform_location : enable
+)";
+	
 	Shader::Shader(std::string vertexSrc, std::string fragmentSrc){
-		auto compileShader = [](GLuint& id, GLenum type, std::string& src){
+		auto compileShader = [](GLuint& id, GLenum type, std::string src){
 			id = glCreateShader(type);
 
 			char const * SourcePointer = src.c_str();
@@ -21,8 +61,8 @@ namespace TurnipRenderer {
 				fprintf(stderr, "%s\n", &ShaderErrorMessage[0]);
 			}
 		};
-		compileShader(vertexId, GL_VERTEX_SHADER, vertexSrc);
-		compileShader(fragmentId, GL_FRAGMENT_SHADER, fragmentSrc);
+		compileShader(vertexId, GL_VERTEX_SHADER, ShaderPrefix + vertexSrc);
+		compileShader(fragmentId, GL_FRAGMENT_SHADER, ShaderPrefix + fragmentSrc);
 
 		programId = glCreateProgram();
 		glAttachShader(programId, vertexId);

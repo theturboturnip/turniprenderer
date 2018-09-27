@@ -73,8 +73,9 @@ namespace TurnipRenderer{
 		SDL_GLContext openGlContext;
 		ImGuiIO* io = nullptr;
 
+		DebugShaders debugShaders;
+
 		ResourceHandle<Mesh> quad;
-		ResourceHandle<Shader> debugOpaqueProgram;
 		ResourceHandle<Shader> debugTransparentProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
 		ResourceHandle<Shader> transparencyResolve;
