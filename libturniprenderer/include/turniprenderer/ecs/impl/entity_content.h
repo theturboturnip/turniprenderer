@@ -1,5 +1,6 @@
 #pragma once
 
+#include "ecs/entity.h" // TODO: Ugly
 #include "ecs/component.h"
 #include "context_scene_aware.h"
 #include "private/external/glm.h"
@@ -12,9 +13,8 @@
 #include <unordered_map>
 #include <memory>
 
-namespace TurnipRenderer {
-	class Entity;
-	
+
+namespace TurnipRenderer::Impl {
 	class EntityContent : ContextSceneAware {
 	public:
 		std::string name;
@@ -54,14 +54,9 @@ namespace TurnipRenderer {
 	private:
 		std::unordered_map<std::type_index, std::unique_ptr<Component>> components;
 	};
-}
 
-#include "transform.h"
-#include "ecs/scene.h"
-
-namespace TurnipRenderer {
 	template<>
-	Transform* Entity::getComponent<Transform>();
+	Transform* EntityContent::getComponent<Transform>();
 	template<>
-	Scene* Entity::getComponent<Scene>();
+	Scene* EntityContent::getComponent<Scene>();
 };

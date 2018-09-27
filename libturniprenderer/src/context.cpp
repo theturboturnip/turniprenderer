@@ -2,9 +2,9 @@
 
 #include <cstdio>
 
-#include "entity.h"
+#include "ecs/entity.h"
 #include "mesh.h"
-#include "system.h"
+#include "ecs/system.h"
 #include "private/external/imgui.h"
 
 namespace TurnipRenderer{
@@ -246,7 +246,7 @@ namespace TurnipRenderer{
 
 		scene.addModel("assets/sponza/sponza.fbx");
 
-		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
+		scene.camera = &scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
 		cameraData.fovDegrees = 60;
 		cameraData.depthMin = 0.1f;
@@ -440,7 +440,7 @@ void main(){
 			}
 		}
 		
-		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
+		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->content->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		
 		// Draw to opaque framebuffer
@@ -459,11 +459,11 @@ void main(){
 			glUseProgram(debugOpaqueProgram->programId);
 			
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh && entity->isOpaque){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
+				if (entity->content->mesh && entity->content->isOpaque){
+					glm::mat4 MVP = transformProjectionFromWorld * entity->content->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 							   reinterpret_cast<const GLfloat*>(&MVP));
-					drawMesh(*entity->mesh);
+					drawMesh(*entity->content->mesh);
 				}
 			}
 		}
@@ -485,12 +485,12 @@ void main(){
 			glUniform1f(2, cameraData.depthMax);
 
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh && !entity->isOpaque){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
+				if (entity->content->mesh && !entity->content->isOpaque){
+					glm::mat4 MVP = transformProjectionFromWorld * entity->content->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
-					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
-					drawMesh(*entity->mesh);
+					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->content->transparencyColor));
+					drawMesh(*entity->content->mesh);
 				}
 			}
 		}
@@ -553,14 +553,14 @@ void main(){
 					Entity* entity = *iter;
 					assert(!entity->isRoot());
 					
-					if (!ImGui::TreeNode((void*)entity->getSiblingIndex(), "%s", entity->name.c_str())){
-						iter = entity->heirarchyEnd();
+					if (!ImGui::TreeNode((void*)entity->getSiblingIndex(), "%s", entity->content->name.c_str())){
+						iter = entity->subentities().end();
 					}else{
-						if (entity->getChildren().size() == 0) ImGui::TreePop();
+						if (entity->totalChildren() == 0) ImGui::TreePop();
 						iter++;
 					}
 					if (!entity->getParent().isRoot()
-						&& entity->getSiblingIndex() == entity->getParent().getChildren().size() - 1){
+						&& entity->getSiblingIndex() == entity->getParent().totalChildren() - 1){
 						ImGui::TreePop();
 					}
 				}

@@ -42,7 +42,7 @@ namespace TurnipRenderer {
 			>;
 		template<class SelectedContainerType>
 		static inline bool fillContainer(Entity* entity, SelectedContainerType& container){
-			PointerType<ComponentType> componentPtr = entity->getComponent<T>();
+			PointerType<ComponentType> componentPtr = entity->content->getComponent<T>();
 			if (componentPtr == nullptr)
 				return false;
 			std::get<PointerType<ComponentType>>(container) = componentPtr;

@@ -1,32 +1,20 @@
 #pragma once
 
-#include "heirarchy.h"
+#include "hierarchy.h"
 
 namespace TurnipRenderer {
-	template<class Node>
-	void Heirarchy<Node>::NodeBase::updateCachedEnd(bool updateParent){
+	template<class NodeContent>
+	void Hierarchy<NodeContent>::Node::updateCachedEnd(bool updateParent){
 		if (children.size() == 0){
 			cachedEndMinus1 = me;
 		}else{
-			cachedEndMinus1 = children[children.size() - 1]->getAsNodeBase().cachedEndMinus1;
+			cachedEndMinus1 = children[children.size() - 1]->cachedEndMinus1;
 		}
-		if (parent != me) parent->getAsNodeBase().updateCachedEnd(); // Tail recursion, won't add to the stack
-	}
-	
-	template<class Node>
-	Heirarchy<Node>::Heirarchy(std::unique_ptr<Node> newRoot) : root(std::move(newRoot)) {			
-		heirarchy.push_back(root.get());
-		NodeBase& nodeData = root->getAsNodeBase();
-		nodeData.me = heirarchy.begin();
-		// This is meant to be meaningless data
-		nodeData.parent = nodeData.me;
-		nodeData.siblingIndex = 0;
-		nodeData.updateCachedEnd(false); // Don't update the parent
-		root->initialize(); // Use the virtual function
+		if (parent != me) parent->updateCachedEnd(); // Tail recursion, won't add to the stack
 	}
 
-	template<class Node>
-	inline size_t Heirarchy<Node>::getRealSiblingIndex(NodeRef newParent, int relSiblingIndex){
+	template<class NodeContent>
+	inline size_t Hierarchy<NodeContent>::getRealSiblingIndex(OrderedIterator newParent, int relSiblingIndex){
 		const int newSiblingCount = static_cast<int>(newParent->children.size());
 		if (newSiblingCount == 0) return 0;
 			
@@ -36,84 +24,84 @@ namespace TurnipRenderer {
 		return static_cast<size_t>(relSiblingIndex);
 	}
 		
-	template<class Node>
-	inline typename Heirarchy<Node>::NodeRef Heirarchy<Node>::nodePositionFromParentAndSiblingIndex(NodeRef parent, size_t siblingIndex){
+	template<class NodeContent>
+	inline typename Hierarchy<NodeContent>::OrderedIterator Hierarchy<NodeContent>::nodePositionFromParentAndSiblingIndex(OrderedIterator parent, size_t siblingIndex){
 		if (siblingIndex > 0)
-			return parent->children[siblingIndex - 1]->getAsNodeBase().heirarchyEnd();
+			return parent->children[siblingIndex - 1]->heirarchyEnd();
 		return parent.plusOne();
 	}
 		
 	// Utility function to update a node when a sibling of a given index is changed (deleted or inserted)
-	template<class Node>
-	inline void Heirarchy<Node>::updateNodeParent(NodeRef parent, size_t siblingIndex){
-		auto& siblings = parent->getAsNodeBase().children;
+	template<class NodeContent>
+	inline void Hierarchy<NodeContent>::updateNodeParent(OrderedIterator parent, size_t siblingIndex){
+		auto& siblings = parent->children;
 		if (siblingIndex >= siblings.size() - 1)
-			parent->getAsNodeBase().updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
+			parent->updateCachedEnd(); // This will update the parent's parent's end, and continue up the stack
 		// Update new siblings that have changed
 		for (size_t i = siblingIndex; i < siblings.size(); i++) {
-			siblings[i]->getAsNodeBase().siblingIndex = i;
+			siblings[i]->siblingIndex = i;
 		}
 	}
 		
 	// Utility function to use when reparenting nodes
-	template<class Node>
-	inline void Heirarchy<Node>::moveNodeAndChildren(NodeRef toMove, NodeRef newLocation){
-		if (newLocation == toMove->getAsNodeBase().heirarchyBegin()) return;
-		heirarchy.splice(newLocation,
-						 heirarchy, // A std::list splicing itself is defined to work
-						 toMove->getAsNodeBase().heirarchyBegin(), toMove->getAsNodeBase().heirarchyEnd());
+	template<class NodeContent>
+	inline void Hierarchy<NodeContent>::moveNodeAndChildren(OrderedIterator toMove, OrderedIterator newLocation){
+		if (newLocation == toMove->heirarchyBegin()) return;
+		orderedNodes.splice(newLocation,
+							orderedNodes, // A std::list splicing itself is defined to work
+							toMove->heirarchyBegin(), toMove->heirarchyEnd());
 	}
 
-	template<class Node>
-	typename Heirarchy<Node>::NodeRef Heirarchy<Node>::addNode(std::unique_ptr<Node> nodeStoragePtr, Node* newParentPtr, int relSiblingIndex){
-		NodeRef newParent = (newParentPtr == nullptr) ? root->getAsNodeBase().me : newParentPtr->getAsNodeBase().me;
+	template<class NodeContent>
+	template<class... Args>
+	typename Hierarchy<NodeContent>::Node& Hierarchy<NodeContent>::addNode(Node& newParentRef, int relSiblingIndex, Args&&... args){
+		OrderedIterator newParent = newParentRef.me;
 		size_t newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
 
-		NodeRef addedNode = heirarchy.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex), nodeStoragePtr.get());
-		NodeBase& nodeData = addedNode->getAsNodeBase();
-		nodeData.me = addedNode;
-		nodeData.parent = newParent;
-		nodeData.siblingIndex = newSiblingIndex;
-		nodeData.updateCachedEnd(false); // Don't update the parent, it will be done in updateNodeParent if necessary
-		auto& newSiblings = newParent->getAsNodeBase().children;
-		newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
-		updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+		OrderedIterator addedNode = orderedNodes.insert(nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex), nullptr);
+		std::unique_ptr<Node> nodeStoragePtr = std::make_unique<Node>(
+			addedNode, newParent, newSiblingIndex,
+			std::forward<Args>(args)... // Arguments for NodeContent constructor
+			);
+		*addedNode = nodeStoragePtr.get();
+		auto& newSiblings = newParent->children;
+		newSiblings.insert(newSiblings.begin() + newSiblingIndex, addedNode->me);
+		updateNodeParent(addedNode->parent, addedNode->siblingIndex);
 
 		addedNode->initialize();
 		
-		storage.push_back(std::move(nodeStoragePtr));
-		return nodeData.me;
+		unorderedNodes.push_back(std::move(nodeStoragePtr));
+		return addedNode->me;
 	}
-	template<class Node>
-	void Heirarchy<Node>::unparentNode(Node& node, int relSiblingIndex){
-		reparentNode(node, *root, relSiblingIndex);
+	template<class NodeContent>
+	void Hierarchy<NodeContent>::unparentNode(Node& node, int relSiblingIndex){
+		reparentNode(node, root, relSiblingIndex);
 	}
-	template<class Node>
-	void Heirarchy<Node>::reparentNode(Node& node, Node& newParentNode, int relSiblingIndex){
-		if (&node == root.get()) return;
+	template<class NodeContent>
+	void Hierarchy<NodeContent>::reparentNode(Node& node, Node& newParentNode, int relSiblingIndex){
+		if (node.isRoot()) return;
 			
-		auto& nodeData = node.getAsNodeBase();
-		auto& newParent = newParentNode.getAsNodeBase().me;
+		auto& newParent = newParentNode.me;
 		auto newSiblingIndex = getRealSiblingIndex(newParent, relSiblingIndex);
 
 		// Update old stuff
 		{
 			// Update old parent
-			auto& oldSiblings = nodeData.parent->getAsNodeBase().children;
-			oldSiblings.erase(oldSiblings.begin() + nodeData.siblingIndex);
-			updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+			auto& oldSiblings = node.parent->children;
+			oldSiblings.erase(oldSiblings.begin() + node.siblingIndex);
+			updateNodeParent(node.parent, node.siblingIndex);
 		}
 				
 		// Update the node itself
-		moveNodeAndChildren(nodeData.me, nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex));
-		nodeData.parent = newParent;
-		nodeData.siblingIndex = newSiblingIndex;
+		moveNodeAndChildren(node.me, nodePositionFromParentAndSiblingIndex(newParent, newSiblingIndex));
+		node.parent = newParent;
+		node.siblingIndex = newSiblingIndex;
 
 		// Update new parent
 		{
-			auto& newSiblings = newParent->getAsNodeBase().children;
-			newSiblings.insert(newSiblings.begin() + newSiblingIndex, nodeData.me);
-			updateNodeParent(nodeData.parent, nodeData.siblingIndex);
+			auto& newSiblings = newParent->children;
+			newSiblings.insert(newSiblings.begin() + newSiblingIndex, node.me);
+			updateNodeParent(node.parent, node.siblingIndex);
 		}
 	}
 }

@@ -3,25 +3,25 @@
 namespace TurnipRenderer {
 	void Transform::updateMatrices(){
 		cachedTransformLocalSpaceFromModelSpace = glm::translate(m_localPosition) * glm::mat4_cast(m_localRotation) * glm::scale(m_localScale);
-		cachedTransformWorldSpaceFromModelSpace = (entity.isRoot()) ? cachedTransformLocalSpaceFromModelSpace : entity.getParent().transform.transformWorldSpaceFromModelSpace() * cachedTransformLocalSpaceFromModelSpace;
+		cachedTransformWorldSpaceFromModelSpace = (entity.isRoot()) ? cachedTransformLocalSpaceFromModelSpace : entity.getParent().content->transform.transformWorldSpaceFromModelSpace() * cachedTransformLocalSpaceFromModelSpace;
 	}
 	void Transform::invalidateLocal(){
 			localInvalidated = true;
 			for (Entity& subentity : entity.subentities()){
-				subentity.transform.parentInvalidated = true;
+				subentity.content->transform.parentInvalidated = true;
 			}
 		}
 
-	void Entity::initialize(){
+	void Impl::EntityContent::initialize(){
 		transform.initialize();
 	}
 
 	template<>
-	Transform* Entity::getComponent<Transform>(){
+	Transform* Impl::EntityContent::getComponent<Transform>(){
 		return &transform;
 	}
 	template<>
-	Scene* Entity::getComponent<Scene>(){
+	Scene* Impl::EntityContent::getComponent<Scene>(){
 		return &scene;
 	}
 }

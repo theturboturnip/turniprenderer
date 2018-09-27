@@ -1,7 +1,4 @@
 #pragma once
 
-#include "impl/scene_hierarchy_base.h"
-
-namespace TurnipRenderer {
-	using Entity = Impl::SceneHierarchyBase::Node;
-};
+#include "impl/entity_def.h"
+#include "impl/entity_content.h"

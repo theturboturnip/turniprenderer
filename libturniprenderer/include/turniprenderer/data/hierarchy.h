@@ -4,6 +4,10 @@
 
 #include "helpers/pointer_iterator.h"
 
+#include <list>
+#include <vector>
+#include <memory>
+
 namespace TurnipRenderer {
 	// NOT THREAD SAFE
 	template<class NodeContent>
@@ -26,7 +30,8 @@ namespace TurnipRenderer {
 		template<class... Args>
 		Hierarchy(Args&&... args)
 			: orderedNodes(std::initializer_list(&root)),
-			  root(orderedNodes.front(), orderedNodes.front(), 0, std::forward<Args>(args)...){}
+			  root(orderedNodes.front(), orderedNodes.front(), 0, std::forward<Args>(args)...){
+		}
 
 		template<class... Args>
 		Node& addNode(Node& newParent, int relSiblingIndex, Args&&...);
@@ -39,10 +44,13 @@ namespace TurnipRenderer {
 		public:
 			template<class... Args>
 			Node(OrderedIterator me, OrderedIterator parent, size_t siblingIndex, Args&&... args)
-				: content(std::forward<Args>(args)...),
-				  me(me), parent(parent), children(), siblingIndex(siblingIndex){}
+				: content(std::make_unique<NodeContent>(std::forward<Args>(args)...)),
+				  me(me), parent(parent), children(), siblingIndex(siblingIndex){
+				updateCachedEnd(false);
+				content->initialize(); // TODO: Is this necessary anymore?
+			}
 			
-			NodeContent content;
+			std::unique_ptr<NodeContent> content;
 
 			template<class IteratorType>
 			struct HierarchyIter {
