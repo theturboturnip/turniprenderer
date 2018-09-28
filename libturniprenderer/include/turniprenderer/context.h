@@ -3,6 +3,7 @@
 #include <string>
 #include <functional>
 
+#include "assets/asset_manager.h"
 #include "resource_manager.h"
 #include "engine_fwd.h"
 #include "scene.h"
@@ -67,6 +68,8 @@ namespace TurnipRenderer{
 		inline const DefaultShaders& getDefaultShaders() const {
 			return defaultShaders;
 		}
+
+		AssetManager assetManager;
 		
 	private:
 		constexpr static size_t WIDTH = 1280;

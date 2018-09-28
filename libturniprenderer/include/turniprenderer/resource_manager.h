@@ -17,11 +17,9 @@ namespace TurnipRenderer {
         template<typename T>
         void addResource(T&&) = delete;
 		template<typename T>
-		void addResource(T&&, size_t) = delete;
+		void addNamedResource(T&&, size_t) = delete;
 		template<typename T>
-		ResourceHandle<T> getNamedResource(size_t){
-			return ResourceHandle<T>();
-		}
+		void getNamedResource(ResourceContainer<T>&, size_t) = delete;
 		
 		void destroyAllUnused(){}
 		inline size_t totalResources() const {
@@ -39,22 +37,21 @@ namespace TurnipRenderer {
 			auto toReturn = ResourceHandle<T>(unnamedResources.back().get());
 			return toReturn;
 		}
-		ResourceHandle<T> addNamedResource(T&& resource, size_t id){
+		using Base::addNamedResource;
+		ResourceHandle<T> addNamedResource(T&& resource, std::string& id){
 			auto uniquePtr = std::make_unique<ResourceContainer<T>>(std::move(resource));
 			auto toReturn = ResourceHandle<T>(uniquePtr.get());
-			namedResources.insert(id, std::move(uniquePtr));
+			namedResources.insert({id, std::move(uniquePtr)});
 			return toReturn;
 		}
-		template<class TypeToGet>
-		ResourceHandle<TypeToGet> getNamedResource(size_t id){
-			if constexpr (!std::is_same<TypeToGet, T>::value) {
-					return Base::template getNamedResource<TypeToGet>(id);
-				}
+		using Base::getNamedResource;
+		void getNamedResource(ResourceHandle<T>& toFill, std::string& id){
 			auto resourceContainerIter = namedResources.find(id);
 			if (resourceContainerIter == namedResources.end()){
-				return ResourceHandle<T>();
+				toFill = ResourceHandle<T>();
+			}else{
+				toFill = ResourceHandle<T>(resourceContainerIter->second.get());
 			}
-			return ResourceHandle<TypeToGet>(resourceContainerIter->second);
 		}
 
 		void destroyAllUnused(){
@@ -83,7 +80,7 @@ namespace TurnipRenderer {
 		// Vector of unique_ptr so that ResourceHandles can take pointers to the
 		// ResourceContainer without worrying about invalidation when the vector resizes
 		std::vector<std::unique_ptr<ResourceContainer<T>>> unnamedResources;
-		std::unordered_map<size_t, std::unique_ptr<ResourceContainer<T>>> namedResources;
-
+		std::unordered_map<std::string, std::unique_ptr<ResourceContainer<T>>> namedResources;
 	};
+
 }

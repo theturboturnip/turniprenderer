@@ -10,7 +10,12 @@
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) :
-		name(std::move(name)), scene(*this), debugShaders(*this), defaultShaders(*this) {}
+		name(std::move(name)),
+		scene(*this),
+		assetManager(*this),
+		debugShaders(*this),
+		defaultShaders(*this)
+		{}
 	
 	void Context::initWindow(){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){

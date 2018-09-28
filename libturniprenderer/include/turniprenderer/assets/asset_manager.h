@@ -2,8 +2,8 @@
 
 #include <string>
 
-#include "context_aware.h"
-#include "resource.h"
+#include "../context_aware.h"
+#include "../resource.h"
 
 namespace TurnipRenderer {	
 	class AssetManager : ContextAware {
@@ -13,5 +13,7 @@ namespace TurnipRenderer {
 		std::string readAsset(std::string path);
 		template<class TypeToLoad>
 		ResourceHandle<TypeToLoad> loadAsset(std::string path);
+		template<class TypeToLoad>
+		ResourceHandle<TypeToLoad> loadAsset(std::string path1, std::string path2);
 	};
 };
