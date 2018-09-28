@@ -8,6 +8,8 @@
 #include "scene.h"
 #include "shader.h"
 #include "input.h"
+#include "material.h"
+#include "texture.h"
 
 #include "private/external/imgui.h"
 #include <SDL.h>
@@ -16,7 +18,7 @@ namespace TurnipRenderer{
 	class Context {
 	public:
 		std::string name = "Context!";
-		ResourceManager<Mesh, Shader> resources;
+		ResourceManager<Mesh, Shader, Material, Texture> resources;
 		Scene scene;
 
 		struct CameraData {
@@ -59,8 +61,11 @@ namespace TurnipRenderer{
 		void initDemoScene();
 		void initWindow();
 
-		inline const Input& getInput(){
+		inline const Input& getInput() const {
 			return input;
+		}
+		inline const DefaultShaders& getDefaultShaders() const {
+			return defaultShaders;
 		}
 		
 	private:
@@ -74,6 +79,7 @@ namespace TurnipRenderer{
 		ImGuiIO* io = nullptr;
 
 		DebugShaders debugShaders;
+		DefaultShaders defaultShaders;
 
 		ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugTransparentProgram;

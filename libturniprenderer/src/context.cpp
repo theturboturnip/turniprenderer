@@ -9,7 +9,8 @@
 #include "private/external/imgui.h"
 
 namespace TurnipRenderer{
-	Context::Context(std::string name) : name(std::move(name)), scene(*this) {}
+	Context::Context(std::string name) :
+		name(std::move(name)), scene(*this), debugShaders(*this), defaultShaders(*this) {}
 	
 	void Context::initWindow(){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -66,6 +67,7 @@ namespace TurnipRenderer{
 		ImGui::StyleColorsDark();
 
 		debugShaders.createShaders();
+		defaultShaders.createShaders();
 	}
 	Context::~Context(){
 		if (sdlWindow){
@@ -411,10 +413,14 @@ void main(){
 			glDepthMask(GL_TRUE);
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glUseProgram(debugShaders.debugOpaqueShader->programId);
 			
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
+					if (entity->shader && entity->material && entity->material->texture){
+						glUseProgram(entity->shader->programId);
+					}else{
+						glUseProgram(debugShaders.debugOpaqueShader->programId);
+					}
 					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 							   reinterpret_cast<const GLfloat*>(&MVP));

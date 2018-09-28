@@ -6,7 +6,9 @@
 #include "engine_fwd.h"
 #include "private/external/glm.h"
 
+#include "material.h"
 #include "mesh.h"
+#include "shader.h"
 #include "resource.h"
 #include "transform.h"
 
@@ -46,6 +48,8 @@ namespace TurnipRenderer {
 		}
 		
 		ResourceHandle<Mesh> mesh;
+		ResourceHandle<Material> material;
+		ResourceHandle<Shader> shader;
 		bool isOpaque = true;
 		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
 		

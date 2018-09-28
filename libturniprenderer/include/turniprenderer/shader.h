@@ -1,6 +1,8 @@
 #pragma once
 
 #include "private/external/gl.h"
+#include "context_aware.h"
+#include "resource.h"
 
 #include <string>
 #include <memory>
@@ -14,10 +16,18 @@ namespace TurnipRenderer {
 		GLuint vertexId;
 		GLuint fragmentId;
 	};
-	class DebugShaders {
+	class DebugShaders : ContextAware {
 	public:
-		std::unique_ptr<Shader> debugOpaqueShader = nullptr;
+		DebugShaders(Context& context) : ContextAware(context) {}
+		ResourceHandle<Shader> debugOpaqueShader;
 
+		void createShaders();
+	};
+	class DefaultShaders : ContextAware{
+	public:
+		DefaultShaders(Context& context) : ContextAware(context) {}
+		ResourceHandle<Shader> phongOpaqueShader;
+		
 		void createShaders();
 	};
 };

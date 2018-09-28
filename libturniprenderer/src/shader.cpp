@@ -1,10 +1,11 @@
 #include "shader.h"
 
 #include <vector>
+#include "context.h"
 
 namespace TurnipRenderer {
 	void DebugShaders::createShaders(){
-		debugOpaqueShader = std::make_unique<Shader>(R"(
+		debugOpaqueShader = context.resources.addResource(Shader(R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -34,7 +35,33 @@ void main(){
     }
 }
 )"
-			);
+															  ));
+	}
+	void DefaultShaders::createShaders(){
+		phongOpaqueShader = context.resources.addResource(Shader(R"(
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
+
+layout(location = 0) uniform mat4 MVP;
+
+layout(location = 0) out vec2 interpolatedUV;
+
+void main() {
+    gl_Position = MVP * vec4(position, 1);
+    interpolatedUV = uv0;
+}
+)", R"(
+layout(location = 0) in vec2 interpolatedUV;
+layout(location = 0) out vec3 color;
+layout(location = 1) uniform sampler2D tex;
+
+void main(){
+    color = texture(tex, interpolatedUV).rgb;
+}
+)"
+															  ));
 	}
 	
 	static std::string ShaderPrefix = R"(

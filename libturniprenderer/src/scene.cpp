@@ -99,6 +99,7 @@ namespace TurnipRenderer {
 			for(unsigned int i = 0; i < workItem.node->mNumMeshes; i++){
 				Entity* meshOwner = (i == 0) ? entity : addObjectToEndOfObject(*entity, "Mesh" + std::to_string(i), glm::vec3(0));
 				meshOwner->mesh = meshes[workItem.node->mMeshes[i]];
+				meshOwner->shader = context.getDefaultShaders().phongOpaqueShader;
 			}
 			
 			// Add the children to the queue
