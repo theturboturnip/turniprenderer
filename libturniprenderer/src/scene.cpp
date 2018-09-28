@@ -66,6 +66,13 @@ namespace TurnipRenderer {
 			meshes[i] = createMeshFromAssimp(importedScene->mMeshes[i]);
 		}
 
+		fprintf(stdout, "Material Report:\n");
+		for (unsigned int i = 0; i < importedScene->mNumMaterials; i++){
+			const char* name = nullptr;
+			importedScene->mMaterials[i]->Get(AI_MATKEY_NAME, name);
+			fprintf(stdout, "\t%s: %d diffuse textures\n", name, importedScene->mMaterials[i]->GetTextureCount(aiTextureType_DIFFUSE));
+		}
+
 		Entity* modelParent = nullptr;
 				
 		struct QueueItem{
