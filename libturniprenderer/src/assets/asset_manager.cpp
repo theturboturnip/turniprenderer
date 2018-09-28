@@ -2,8 +2,8 @@
 
 #include <fstream>
 
-namespace TurnipRenderer::AssetManager {
-	std::string readAsset(std::string path){
+namespace TurnipRenderer {
+	std::string AssetManager::readAsset(std::string path){
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		if (in)
 		{
