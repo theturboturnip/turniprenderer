@@ -6,12 +6,15 @@
 namespace TurnipRenderer {
 	class Bounds {
 	public:
-		inline glm::vec3 getMin() const {
-			return min;
+		glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
+		glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
+		
+		inline glm::vec3 getCentre() const {
+			return (max + min) / 2.0f;
 		}
-		inline glm::vec3 getMax() const {
-			return max;
-		};
+		inline glm::vec3 getExtents() const {
+			return (max - min) / 2.0f;
+		}
 
 		inline void encapsulate(glm::vec3 point){
 			min = glm::min(min, point);
@@ -21,10 +24,14 @@ namespace TurnipRenderer {
 			min = glm::min(min, bounds.min);
 			max = glm::max(max, bounds.max);
 		}
-
-	private:
-		glm::vec3 min = glm::vec3(std::numeric_limits<float>::max());
-		glm::vec3 max = glm::vec3(std::numeric_limits<float>::lowest());
+		inline bool contains(glm::vec3 point){
+			return point.x >= min.x && point.x <= max.x
+				&& point.y >= min.y && point.y <= max.y
+				&& point.z >= min.z && point.z <= max.z;
+		}
+		inline bool contains(Bounds bounds){
+			return contains(bounds.min) && contains(bounds.max);
+		}
 
 		friend Bounds operator*(glm::mat4, const Bounds&);
 	};

@@ -68,12 +68,16 @@ namespace TurnipRenderer{
 		inline const DefaultShaders& getDefaultShaders() const {
 			return defaultShaders;
 		}
+		inline const DebugShaders& getDebugShaders() const {
+			return debugShaders;
+		}
 
 		AssetManager assetManager;
-		
-	private:
+
 		constexpr static size_t WIDTH = 1280;
 		constexpr static size_t HEIGHT = 720;
+		
+	private:
 
 		Input input;
 		
