@@ -7,6 +7,7 @@
 #include "mesh.h"
 #include "system.h"
 #include "private/external/imgui.h"
+#include "dirlight_system.h"
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) :
@@ -73,6 +74,8 @@ namespace TurnipRenderer{
 
 		debugShaders.createShaders();
 		defaultShaders.createShaders();
+
+		scene.systems.push_back(std::make_unique<DirectionalLightRenderer>(*this));
 	}
 	Context::~Context(){
 		if (sdlWindow){

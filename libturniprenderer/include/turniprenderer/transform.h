@@ -16,17 +16,17 @@ namespace TurnipRenderer {
 			updateMatrices();
 		}
 
-		inline glm::vec3 localPosition(){
+		inline glm::vec3 localPosition() const {
 			return m_localPosition;
 		}
 		inline void setLocalPosition(glm::vec3 newLocalPosition){
 			invalidateLocal();
 			m_localPosition = newLocalPosition;
 		}
-		inline glm::quat localRotation(){
+		inline glm::quat localRotation() const {
 			return m_localRotation;
 		}
-		inline glm::vec3 localEulerAnglesDegrees(){
+		inline glm::vec3 localEulerAnglesDegrees() const {
 			return glm::degrees(m_localEulerAngles);
 		}
 		inline void setLocalEulerAnglesDegrees(glm::vec3 newLocalEulerAnglesDegrees){
@@ -38,7 +38,11 @@ namespace TurnipRenderer {
 			invalidateLocal();
 			m_localScale = newLocalScale;
 		}
-		inline const glm::mat4 transformWorldSpaceFromModelSpace(){
+		inline glm::quat worldRotation() const {
+			updateMatricesIfNecessary();
+			return cachedWorldRotation;
+		}
+		inline glm::mat4 transformWorldSpaceFromModelSpace() const {
 			updateMatricesIfNecessary();
 			return cachedTransformWorldSpaceFromModelSpace;
 		}
@@ -55,20 +59,21 @@ namespace TurnipRenderer {
 
 			m_localRotation = glm::quat(m_localEulerAngles);
 		}
-		void invalidateLocal();
-		inline void updateMatricesIfNecessary(){
+		void invalidateLocal() const;
+		inline void updateMatricesIfNecessary() const {
 			if (localInvalidated || parentInvalidated) updateMatrices();
 		}
-		void updateMatrices(); // Recurse up if other parents are dirty
+		void updateMatrices() const; // Recurse up if other parents are dirty
 			
 		Entity& entity;
 		glm::vec3 m_localPosition;
 		glm::quat m_localRotation;
 		glm::vec3 m_localEulerAngles;
 		glm::vec3 m_localScale;
-		glm::mat4 cachedTransformLocalSpaceFromModelSpace = glm::mat4(1);
-		glm::mat4 cachedTransformWorldSpaceFromModelSpace = glm::mat4(1);
-		bool localInvalidated = false;
-		bool parentInvalidated = false;
+		mutable glm::mat4 cachedTransformLocalSpaceFromModelSpace = glm::mat4(1);
+		mutable glm::mat4 cachedTransformWorldSpaceFromModelSpace = glm::mat4(1);
+		mutable glm::quat cachedWorldRotation = glm::quat(1,0,0,0);
+		mutable bool localInvalidated = false;
+		mutable bool parentInvalidated = false;
 	};
 };

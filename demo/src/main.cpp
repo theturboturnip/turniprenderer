@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "turniprenderer/context.h"
+#include "turniprenderer/light.h"
 
 #include "free_camera/component.h"
 #include "free_camera/system.h"
@@ -20,6 +21,8 @@ int main(){
 	context.initDemoScene();
 	context.scene.camera->addComponent<FreeCameraComponent>();
 	context.scene.systems.push_back(std::make_unique<FreeCameraSystem>(context));
+	context.scene.addObjectToEndOfRoot("Light", glm::vec3(0,0,0), glm::vec3(90,0,0))->
+		addComponent<TurnipRenderer::DirectionalLight>(2048, 2048);
 	
 	while (!context.renderFrame()) {}
 			

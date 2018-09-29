@@ -5,7 +5,7 @@
 namespace TurnipRenderer {
 	class Scene;
 
-	class ContextSceneAware : ContextAware {
+	class ContextSceneAware : protected ContextAware {
 	protected:
 		ContextSceneAware(Context& context, Scene& scene)
 			: ContextAware(context), scene(scene) {}
