@@ -4,6 +4,7 @@
 #include <functional>
 
 #include "assets/asset_manager.h"
+#include "debug_window.h"
 #include "resource_manager.h"
 #include "engine_fwd.h"
 #include "scene.h"
@@ -85,6 +86,8 @@ namespace TurnipRenderer{
 		SDL_GLContext openGlContext;
 		ImGuiIO* io = nullptr;
 
+		Debug::DebugWindow debugWindow;
+		
 		DebugShaders debugShaders;
 		DefaultShaders defaultShaders;
 

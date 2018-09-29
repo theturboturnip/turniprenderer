@@ -34,6 +34,9 @@ namespace TurnipRenderer {
 			m_localEulerAngles = glm::radians(newLocalEulerAnglesDegrees);
 			updateQuatFromEulerAngles();
 		}
+		inline glm::vec3 localScale(){
+			return m_localScale;
+		}
 		inline void setLocalScale(glm::vec3 newLocalScale){
 			invalidateLocal();
 			m_localScale = newLocalScale;

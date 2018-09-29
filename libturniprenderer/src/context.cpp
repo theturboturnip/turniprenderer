@@ -14,6 +14,7 @@ namespace TurnipRenderer{
 		name(std::move(name)),
 		scene(*this),
 		assetManager(*this),
+		debugWindow(*this),
 		debugShaders(*this),
 		defaultShaders(*this)
 		{}
@@ -520,25 +521,7 @@ void main(){
 			ImGui::NewFrame();
 			
 			//ImGui::ShowDemoWindow(nullptr);
-			if (ImGui::Begin("Scene Inspector", nullptr)){
-				auto iter = ++scene.heirarchy.begin();
-				while(iter != scene.heirarchy.end()){
-					Entity* entity = *iter;
-					assert(!entity->isRoot());
-					
-					if (!ImGui::TreeNode((void*)entity->getSiblingIndex(), "%s", entity->name.c_str())){
-						iter = entity->heirarchyEnd();
-					}else{
-						if (entity->getChildren().size() == 0) ImGui::TreePop();
-						iter++;
-					}
-					if (!entity->getParent().isRoot()
-						&& entity->getSiblingIndex() == entity->getParent().getChildren().size() - 1){
-						ImGui::TreePop();
-					}
-				}
-			}
-			ImGui::End();
+			debugWindow.show();
 
 			if (ImGui::Begin("Input", nullptr)){
 				ImGui::Text("Mouse Pos: %f %f", input.mouse.pos.x, input.mouse.pos.y);
