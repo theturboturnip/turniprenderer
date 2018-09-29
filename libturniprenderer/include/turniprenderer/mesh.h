@@ -5,6 +5,8 @@
 
 #include <vector>
 
+#include "bounds.h"
+
 namespace TurnipRenderer {
 	class Mesh {
 	public:
@@ -34,8 +36,12 @@ namespace TurnipRenderer {
 		inline const auto& indices(){
 			return data.indices;
 		}
+		inline Bounds getBounds(){
+			return bounds;
+		}
 	private:
 		const MeshData data;
+		Bounds bounds;
 		
 		GLuint vao = 0;
 		GLuint vbo = 0;
