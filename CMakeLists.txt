@@ -16,6 +16,8 @@ find_package(OpenGL REQUIRED)
 #  file(GLOB_RECURSE EXTERNAL_SRC_FILES ${EXTERNAL_SRC_DIR}/*.cpp)
 #endforeach(EXTERNAL_SRC_DIR)
 
+add_definitions("-O3")
+
 add_subdirectory(external)
 set(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS} ${SDL2_INCLUDE_DIRS})
 

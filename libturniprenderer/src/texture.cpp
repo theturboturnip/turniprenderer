@@ -5,10 +5,11 @@
 #include <cstdio>
 #include <assert.h>
 
+#include <chrono>
+
 namespace TurnipRenderer {
 	Texture::Texture(std::vector<unsigned char>&& assetData){
 		unsigned char* dataPtr = stbi_load_from_memory(assetData.data(), assetData.size(), &width, &height, &channels, 0);
-		fprintf(stdout, "assetData.data() = %p, assetData.size() = %zu, dataPtr = %p\n", assetData.data(), assetData.size(), dataPtr);
 		assert(dataPtr);
 		data = std::vector<unsigned char>(dataPtr, dataPtr + (width * height * channels));
 		stbi_image_free(dataPtr);
