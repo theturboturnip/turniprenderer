@@ -1,25 +1,34 @@
 #include "assets/asset_manager.h"
 
 #include <fstream>
+#include <iomanip>
+#include <assert.h>
 
 #include "context.h"
 #include "texture.h"
 #include "shader.h"
 
 namespace TurnipRenderer {
-	std::string AssetManager::readAsset(std::string path){
+	std::string AssetManager::directoryName(std::string filepath){
+		return filepath.substr(0, filepath.rfind('/')); // TODO: Multiplat
+	}
+	std::string AssetManager::pathRelativeToDirectory(std::string directory, std::string relativePath){
+		return directoryName(directory) + '/' + relativePath;
+	}
+	
+	std::vector<unsigned char> AssetManager::readAsset(std::string path){
 		std::ifstream in(path, std::ios::in | std::ios::binary);
+		in.unsetf(std::ios::skipws);
 		if (in)
-		{
-			std::string contents;
-			in.seekg(0, std::ios::end);
-			contents.resize(in.tellg());
-			in.seekg(0, std::ios::beg);
-			in.read(&contents[0], contents.size());
+		{			
+			// read the data:
+			std::vector<unsigned char> contents((std::istreambuf_iterator<char>(in)),
+												 std::istreambuf_iterator<char>());
 			in.close();
-			return(contents);
+			return contents;
 		}
-		return "";
+		assert(false);
+		return std::vector<unsigned char>();
 	}
 
 	template<class T>

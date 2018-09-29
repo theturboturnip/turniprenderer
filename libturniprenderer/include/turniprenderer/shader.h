@@ -6,13 +6,24 @@
 
 #include <string>
 #include <memory>
+#include <vector>
 
 namespace TurnipRenderer {
 	class Shader {
 	public:
-		Shader(std::string vertexSrc, std::string fragmentSrc);
+		Shader(std::string vertexSrc, std::string fragmentSrc){
+			compileShaders(vertexSrc.c_str(), fragmentSrc.c_str());
+		}
+		Shader(std::vector<unsigned char> vertexSrcBytes, std::vector<unsigned char> fragmentSrcBytes){
+			compileShaders(
+				reinterpret_cast<char*>(vertexSrcBytes.data()),
+				reinterpret_cast<char*>(fragmentSrcBytes.data())
+				);
+		}
 		GLuint programId;
 	private:
+		void compileShaders(const char* const vertexSrc, const char* const fragmentSrc);
+		
 		GLuint vertexId;
 		GLuint fragmentId;
 	};

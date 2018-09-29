@@ -69,13 +69,13 @@ void main(){
 #extension GL_ARB_separate_shader_objects : enable
 #extension GL_ARB_explicit_uniform_location : enable
 )";
-	
-	Shader::Shader(std::string vertexSrc, std::string fragmentSrc){
-		auto compileShader = [](GLuint& id, GLenum type, std::string src){
+
+	void Shader::compileShaders(const char* const vertexSrc, const char* const fragmentSrc){
+		auto compileShader = [](GLuint& id, GLenum type, const char* const src){
 			id = glCreateShader(type);
 
-			char const * SourcePointer = src.c_str();
-			glShaderSource(id, 1, &SourcePointer , NULL);
+			char const * SourcePointer[] = {ShaderPrefix.c_str(), src};
+			glShaderSource(id, 2, SourcePointer, NULL);
 			glCompileShader(id);
 
 			GLint Result = GL_FALSE;
@@ -88,8 +88,8 @@ void main(){
 				fprintf(stderr, "%s\n", &ShaderErrorMessage[0]);
 			}
 		};
-		compileShader(vertexId, GL_VERTEX_SHADER, ShaderPrefix + vertexSrc);
-		compileShader(fragmentId, GL_FRAGMENT_SHADER, ShaderPrefix + fragmentSrc);
+		compileShader(vertexId, GL_VERTEX_SHADER, vertexSrc);
+		compileShader(fragmentId, GL_FRAGMENT_SHADER, fragmentSrc);
 
 		programId = glCreateProgram();
 		glAttachShader(programId, vertexId);

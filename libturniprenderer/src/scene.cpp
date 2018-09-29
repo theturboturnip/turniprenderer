@@ -20,11 +20,11 @@ namespace TurnipRenderer {
 	}
 	Scene::~Scene() = default;
 
-	void Scene::addModel(std::string path){
+	void Scene::addModel(std::string scenePath){
 		Assimp::Importer importer;
-		const aiScene* importedScene = importer.ReadFile(path, aiProcess_Triangulate | aiProcess_FlipUVs);
+		const aiScene* importedScene = importer.ReadFile(scenePath, aiProcess_Triangulate | aiProcess_FlipUVs);
 		if(!importedScene || importedScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !importedScene->mRootNode){
-			fprintf(stderr, "Scene at %s failed to load, error %s\n", path.c_str(), importer.GetErrorString());
+			fprintf(stderr, "Scene at %s failed to load, error %s\n", scenePath.c_str(), importer.GetErrorString());
 			return;
 		}
 
@@ -70,16 +70,18 @@ namespace TurnipRenderer {
 
 		std::vector<ResourceHandle<Material>> materials(importedScene->mNumMaterials);
 		{
-			auto createMaterialFromAssimp = [this, glmFromAssimpVec2, glmFromAssimpVec3](aiMaterial* material) -> ResourceHandle<Material> {
+			auto createMaterialFromAssimp = [this, glmFromAssimpVec2, glmFromAssimpVec3, &scenePath](aiMaterial* material) -> ResourceHandle<Material> {
 				
 				ResourceHandle<Texture> texture;
 				if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0){
 					aiString path;
 					material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
+					std::string pathRelativeToFile(path.C_Str());
+					std::string actualPath = AssetManager::pathRelativeToDirectory(scenePath, pathRelativeToFile);
+					fprintf(stdout, "\tLoading texture at %s\n", actualPath.c_str());
 					if (*path.C_Str() != '*'){
-						texture = context.assetManager.loadAsset<Texture>(std::string(path.C_Str()));
+						texture = context.assetManager.loadAsset<Texture>(actualPath);
 					}
-					fprintf(stdout, "\tLoading texture at %s\n", path.C_Str());
 
 				}
 				return context.resources.addResource(Material{

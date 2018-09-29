@@ -423,12 +423,16 @@ void main(){
 				if (entity->mesh && entity->isOpaque){
 					if (entity->shader && entity->material && entity->material->texture){
 						glUseProgram(entity->shader->programId);
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, entity->material->texture->textureId);
+						glUniform1i(1, 0); // Bind uniform 0 to texture 0
 					}else{
 						glUseProgram(debugShaders.debugOpaqueShader->programId);
 					}
 					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
-							   reinterpret_cast<const GLfloat*>(&MVP));
+									   reinterpret_cast<const GLfloat*>(&MVP));
+
 					drawMesh(*entity->mesh);
 				}
 			}
