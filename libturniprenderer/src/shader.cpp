@@ -62,6 +62,26 @@ void main(){
 }
 )"
 															  ));
+
+		transparentColorShader = context.resources.addResource(Shader(R"(
+layout(location = 0) in vec3 position;
+layout(location = 1) in vec3 normal;
+layout(location = 2) in vec3 tangent;
+layout(location = 3) in vec2 uv0;
+
+layout(location = 0) uniform mat4 MVP;
+
+void main() {
+    gl_Position = MVP * vec4(position, 1);
+}
+)", R"(
+layout(location = 0) out vec4 color;
+layout(location = 1) uniform vec4 colorUniform;
+
+void main(){
+    color = colorUniform;
+}
+)"));
 	}
 	
 	static std::string ShaderPrefix = R"(

@@ -38,6 +38,7 @@ namespace TurnipRenderer {
 	public:
 		DefaultShaders(Context& context) : ContextAware(context) {}
 		ResourceHandle<Shader> phongOpaqueShader;
+		ResourceHandle<Shader> transparentColorShader;
 		
 		void createShaders();
 	};
