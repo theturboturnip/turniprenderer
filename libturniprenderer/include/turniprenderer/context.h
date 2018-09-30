@@ -3,11 +3,15 @@
 #include <string>
 #include <functional>
 
+#include "assets/asset_manager.h"
+#include "debug_window.h"
 #include "resource_manager.h"
 #include "engine_fwd.h"
 #include "scene.h"
 #include "shader.h"
 #include "input.h"
+#include "material.h"
+#include "texture.h"
 
 #include "private/external/imgui.h"
 #include <SDL.h>
@@ -16,7 +20,7 @@ namespace TurnipRenderer{
 	class Context {
 	public:
 		std::string name = "Context!";
-		ResourceManager<Mesh, Shader> resources;
+		ResourceManager<Mesh, Shader, Material, Texture> resources;
 		Scene scene;
 
 		struct CameraData {
@@ -59,13 +63,31 @@ namespace TurnipRenderer{
 		void initDemoScene();
 		void initWindow();
 
-		inline const Input& getInput(){
+		inline const Input& getInput() const {
 			return input;
 		}
-		
-	private:
+		inline const DefaultShaders& getDefaultShaders() const {
+			return defaultShaders;
+		}
+		inline const DebugShaders& getDebugShaders() const {
+			return debugShaders;
+		}
+
+		AssetManager assetManager;
+
 		constexpr static size_t WIDTH = 1280;
 		constexpr static size_t HEIGHT = 720;
+
+		struct Shadowmap {
+			GLuint colorBuffer;
+			GLuint depthBuffer;
+			glm::mat4 VP;
+		};
+		std::vector<Shadowmap> shadowmapsToUse;
+
+		void LogAvailableError();
+		
+	private:
 
 		Input input;
 		
@@ -73,7 +95,10 @@ namespace TurnipRenderer{
 		SDL_GLContext openGlContext;
 		ImGuiIO* io = nullptr;
 
+		Debug::DebugWindow debugWindow;
+		
 		DebugShaders debugShaders;
+		DefaultShaders defaultShaders;
 
 		ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugTransparentProgram;
@@ -84,6 +109,5 @@ namespace TurnipRenderer{
 		void drawMesh(Mesh& mesh);
 		void drawQuad(Shader& shader, GLuint buffer);
 		void drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
-		void LogAvailableError();
 	};
 }

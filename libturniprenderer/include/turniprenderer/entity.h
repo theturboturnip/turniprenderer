@@ -1,12 +1,15 @@
 #pragma once
 
 #include "scene.h"
+#include "scene_access.h"
 #include "component.h"
 #include "context_scene_aware.h"
 #include "engine_fwd.h"
 #include "private/external/glm.h"
 
+#include "material.h"
 #include "mesh.h"
+#include "shader.h"
 #include "resource.h"
 #include "transform.h"
 
@@ -20,10 +23,12 @@ namespace TurnipRenderer {
 
 		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::quat localRotation = glm::quat(1, 0, 0, 0), glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name),
-			  transform(*this, localPosition, localRotation, localScale){}
+			  transform(*this, localPosition, localRotation, localScale),
+			  sceneAccess(context, scene){}
 		Entity(Context& context, Scene& scene, std::string name, glm::vec3 localPosition, glm::vec3 localEulerAnglesDegrees, glm::vec3 localScale = glm::vec3(1))
 			: ContextSceneAware(context, scene), name(name),
-			  transform(*this, localPosition, localEulerAnglesDegrees, localScale){}
+			  transform(*this, localPosition, localEulerAnglesDegrees, localScale),
+			  sceneAccess(context, scene){}
 
 		void initialize() override;
 		// TODO: Invalidate transform on reparent
@@ -46,11 +51,14 @@ namespace TurnipRenderer {
 		}
 		
 		ResourceHandle<Mesh> mesh;
+		ResourceHandle<Material> material;
+		ResourceHandle<Shader> shader;
 		bool isOpaque = true;
 		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
 		
 		Transform transform;
 	private:
+		SceneAccessComponent sceneAccess;
 		std::unordered_map<std::type_index, std::unique_ptr<Component>> components;
 	};
 }
@@ -62,5 +70,5 @@ namespace TurnipRenderer {
 	template<>
 	Transform* Entity::getComponent<Transform>();
 	template<>
-	Scene* Entity::getComponent<Scene>();
+	SceneAccessComponent* Entity::getComponent<SceneAccessComponent>();
 };

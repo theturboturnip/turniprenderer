@@ -1,2 +1,6 @@
 cd ./build/demo/
-./demo
+if [ $1 == "debug" ]; then
+	gdb ./demo
+else
+	./demo
+fi

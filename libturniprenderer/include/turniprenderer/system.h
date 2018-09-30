@@ -1,8 +1,11 @@
 #pragma once
 
 #include "engine_fwd.h"
+#include "component.h"
 #include "context_aware.h"
 #include "entity.h"
+
+#include <type_traits>
 
 namespace TurnipRenderer {
 	template<bool Const, class... Ts>

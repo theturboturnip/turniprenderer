@@ -7,9 +7,17 @@
 #include "mesh.h"
 #include "system.h"
 #include "private/external/imgui.h"
+#include "dirlight_system.h"
 
 namespace TurnipRenderer{
-	Context::Context(std::string name) : name(std::move(name)), scene(*this) {}
+	Context::Context(std::string name) :
+		name(std::move(name)),
+		scene(*this),
+		assetManager(*this),
+		debugWindow(*this),
+		debugShaders(*this),
+		defaultShaders(*this)
+		{}
 	
 	void Context::initWindow(){
 		if (SDL_Init(SDL_INIT_VIDEO) != 0){
@@ -22,8 +30,8 @@ namespace TurnipRenderer{
 		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
 		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
     
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 6 );
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 		LogAvailableError();
@@ -66,6 +74,9 @@ namespace TurnipRenderer{
 		ImGui::StyleColorsDark();
 
 		debugShaders.createShaders();
+		defaultShaders.createShaders();
+
+		scene.systems.push_back(std::make_unique<DirectionalLightRenderer>(*this));
 	}
 	Context::~Context(){
 		if (sdlWindow){
@@ -351,6 +362,9 @@ void main(){
 	}
 
 	bool Context::renderFrame(){
+		LogAvailableError();
+		//fprintf(stderr, "Starting frame\n");
+		
 		bool done = false;
 		input.onFrameStart();
 		SDL_Event event;
@@ -389,38 +403,103 @@ void main(){
 			}
 		}
 
+		glCullFace(GL_BACK);
+
+		shadowmapsToUse.clear();
+		
 		for(const auto& system : scene.systems){
 			for (Entity* entity : scene.heirarchy){
 				system->runOnEntityIfValid(entity);
 			}
 		}
+		//LogAvailableError();
+		//fprintf(stderr, "Finished running systems\n");
 		
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
-		
-		// Draw to opaque framebuffer
+
+		glViewport(0,0, WIDTH,HEIGHT);
+		// Depth Pass
 		{
 			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
-			glViewport(0,0, WIDTH,HEIGHT);
-			// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
+			
+			glDisable(GL_BLEND);
+			
+			glEnable(GL_DEPTH_TEST);
+			//glDepthFunc(GL_LESS);
+			glDepthMask(GL_TRUE);
+
+			glClear(GL_DEPTH_BUFFER_BIT);
+
+			glUseProgram(defaultShaders.depthOnlyShader->programId);
+			for (auto* entity : scene.heirarchy){
+				if (entity->mesh && entity->isOpaque){
+					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
+					glUniformMatrix4fv(0, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&MVP));
+
+					drawMesh(*entity->mesh);
+				}
+			}
+		}
+		{
+			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
+		// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
 			glClearColor(1,0.5,1,0);
 
 			glDisable(GL_BLEND);
 			
 			glEnable(GL_DEPTH_TEST);
+			//glDepthFunc(GL_LEQUAL);
 			glDepthMask(GL_TRUE);
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-			glUseProgram(debugShaders.debugOpaqueShader->programId);
-			
+
+			LogAvailableError();
+
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
+					if (entity->shader && entity->material && entity->material->texture){
+						glUseProgram(entity->shader->programId);
+						glActiveTexture(GL_TEXTURE0);
+						glBindTexture(GL_TEXTURE_2D, entity->material->texture->textureId);
+						glUniform1i(16, 0); // Bind uniform 16 to texture 0
+					}else{
+						glUseProgram(debugShaders.debugOpaqueShader->programId);
+					}
+					glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
+					glm::mat4 MVP = transformProjectionFromWorld * M;
+					glm::mat4 lightMVP;
+					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material && entity->material->texture){
+						//fprintf(stderr, "Using a shadowmap\n");
+						glActiveTexture(GL_TEXTURE1);
+						glBindTexture(GL_TEXTURE_2D, shadowmapsToUse[0].colorBuffer);
+						glUniform1i(3, 1);
+						glActiveTexture(GL_TEXTURE2);
+						glBindTexture(GL_TEXTURE_2D, shadowmapsToUse[0].depthBuffer);
+						glUniform1i(4, 2);
+						lightMVP = shadowmapsToUse[0].VP * M;
+					}
+
 					glUniformMatrix4fv(0, 1, GL_FALSE,
-							   reinterpret_cast<const GLfloat*>(&MVP));
+									   reinterpret_cast<const GLfloat*>(&MVP));
+					//LogAvailableError();
+					//fprintf(stderr, "Passing in alt matrices\n");
+					if (entity->shader && entity->material && entity->material->texture){
+						glUniformMatrix4fv(1, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&M));
+						glUniformMatrix4fv(2, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&lightMVP));
+					}
+					//LogAvailableError();
+
 					drawMesh(*entity->mesh);
 				}
 			}
+
+			//if (shadowmapsToUse.size() > 0){
+			//	fprintf(stderr, "Used a shadowmap for the opaque rendering\n");
+			//}
 		}
 		// Draw to transparency buffer
 		{
@@ -434,6 +513,7 @@ void main(){
 			glBlendFunc(GL_ONE, GL_ONE);
 
 			glEnable(GL_DEPTH_TEST);
+			//glDepthFunc(GL_LESS);
 			glDepthMask(GL_FALSE);
 			
 			glUniform1f(1, cameraData.depthMin);
@@ -448,6 +528,7 @@ void main(){
 					drawMesh(*entity->mesh);
 				}
 			}
+			//fprintf(stderr, "Finished the transparency pass\n");
 		}
 		// Blend transparency buffer onto opaque buffer
 		{
@@ -477,6 +558,9 @@ void main(){
 					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[3]);
 					glUniform1i(3, 3); // Bind uniform 0 to texture 0
 				});
+
+			//fprintf(stderr, "Finished the transparency blend pass\n");
+
 		}
 		// Postprocessing Effects
 		{
@@ -492,6 +576,9 @@ void main(){
 			glDepthMask(GL_FALSE);
 
 			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
+
+			//fprintf(stderr, "Finished the postprocess pass\n");
+
 		}
 		LogAvailableError();
 
@@ -502,25 +589,7 @@ void main(){
 			ImGui::NewFrame();
 			
 			//ImGui::ShowDemoWindow(nullptr);
-			if (ImGui::Begin("Scene Inspector", nullptr)){
-				auto iter = ++scene.heirarchy.begin();
-				while(iter != scene.heirarchy.end()){
-					Entity* entity = *iter;
-					assert(!entity->isRoot());
-					
-					if (!ImGui::TreeNode((void*)entity->getSiblingIndex(), "%s", entity->name.c_str())){
-						iter = entity->heirarchyEnd();
-					}else{
-						if (entity->getChildren().size() == 0) ImGui::TreePop();
-						iter++;
-					}
-					if (!entity->getParent().isRoot()
-						&& entity->getSiblingIndex() == entity->getParent().getChildren().size() - 1){
-						ImGui::TreePop();
-					}
-				}
-			}
-			ImGui::End();
+			debugWindow.show();
 
 			if (ImGui::Begin("Input", nullptr)){
 				ImGui::Text("Mouse Pos: %f %f", input.mouse.pos.x, input.mouse.pos.y);
@@ -538,6 +607,9 @@ void main(){
 			
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
+
+			//fprintf(stderr, "Finished the ImGui pass\n");
+
 		}
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
@@ -567,7 +639,9 @@ void main(){
 		if (*sdlError != '\0')
 			fprintf(stderr, "SDL Error: %s\n", sdlError);
 		GLuint glError = glGetError();
-		if (glError)
+		if (glError){
 			fprintf(stderr, "OpenGL Error: %d\n", glError);
+			assert(false);
+		}
 	}
 };

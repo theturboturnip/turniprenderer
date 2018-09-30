@@ -48,7 +48,7 @@ namespace TurnipRenderer {
 		ResourceHandle<T>& operator=(ResourceHandle<T> newThing){
 			if (container) container->refCount--;
 			container = newThing.container;
-			container->refCount++;
+			if (container) container->refCount++;
             return *this;
 		}
         //ResourceHandle(ResourceHandle<T>&& moveFrom)
@@ -96,7 +96,7 @@ namespace TurnipRenderer {
 	protected:
 		ResourceHandle(ResourceContainer<ResourceType>* newContainer, bool addToRefCount)
 			: container(newContainer) {
-            if (addToRefCount) container->refCount++;
+            if (addToRefCount && container) container->refCount++;
         }
 
 

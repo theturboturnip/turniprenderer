@@ -2,6 +2,9 @@
 
 namespace TurnipRenderer {
 	Mesh::Mesh(MeshData&& data) : data(data) {
+		for (const auto& vertex : this->data.vertices)
+			bounds.encapsulate(vertex.position);
+		
 		createBuffer(); // TODO: Is doing this in the constructor bad?
 	}
 
@@ -30,6 +33,5 @@ namespace TurnipRenderer {
 		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)( offsetof(Vertex, normal)));
 		glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)( offsetof(Vertex, tangent)));
 		glVertexAttribPointer(3, 2, GL_FLOAT, GL_FALSE, sizeof(Vertex), (void*)( offsetof(Vertex, uv0)));
-
 	}
 };
