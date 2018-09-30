@@ -7,7 +7,7 @@ namespace TurnipRenderer {
 	public:
 		Transform(Entity& entity, glm::vec3 lp, glm::quat lr, glm::vec3 ls)
 			// TODO: Proper euler angle init
-			: entity(entity), m_localPosition(lp), m_localRotation(lr), m_localEulerAngles(0), m_localScale(ls) {}
+			: Transform(entity, lp, quatToEuler(lr), ls){}
 		Transform(Entity& entity, glm::vec3 lp, glm::vec3 lead, glm::vec3 ls)
 			: entity(entity), m_localPosition(lp), m_localEulerAngles(glm::radians(lead)), m_localScale(ls) {
 			updateQuatFromEulerAngles();
@@ -25,6 +25,9 @@ namespace TurnipRenderer {
 		}
 		inline glm::quat localRotation() const {
 			return m_localRotation;
+		}
+		inline void setLocalRotation(glm::quat newLocalRotation) {
+			setLocalEulerAnglesDegrees(quatToEuler(newLocalRotation));
 		}
 		inline glm::vec3 localEulerAnglesDegrees() const {
 			return glm::degrees(m_localEulerAngles);
@@ -55,6 +58,9 @@ namespace TurnipRenderer {
 			applyTo = glm::rotateX(applyTo, m_localEulerAngles.x);
 			applyTo = glm::rotateY(applyTo, m_localEulerAngles.y);
 			return applyTo;
+		}
+		inline glm::vec3 quatToEuler(glm::quat quat){
+			return glm::eulerAngles(quat);
 		}
 		inline void updateQuatFromEulerAngles(){
 			glm::vec3 normal = applyEulerAngles(glm::vec3(0,0,1));

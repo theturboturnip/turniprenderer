@@ -27,7 +27,7 @@ namespace TurnipRenderer {
 					const bool nodeIsOpen = ImGui::TreeNodeEx((void*)entity->getSiblingIndex(), nodeFlags, "%s", entity->name.c_str());
 
 					if (ImGui::IsItemClicked())
-						selected = (selected == entity) ? nullptr : entity;
+						selected = entity;
 
 					if (!nodeIsOpen || isLeaf){
 						iter = entity->heirarchyEnd();
