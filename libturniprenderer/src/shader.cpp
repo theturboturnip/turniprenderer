@@ -45,25 +45,48 @@ layout(location = 2) in vec3 tangent;
 layout(location = 3) in vec2 uv0;
 
 layout(location = 0) uniform mat4 MVP;
+layout(location = 1) uniform mat4 M;
+layout(location = 2) uniform mat4 lightMVP;
 
-layout(location = 0) out vec2 interpolatedUV;
+layout(location = 0) out struct {
+vec2 uv0;
+vec3 normal;
+vec3 lightDirection;
+vec4 shadowmapPos;
+} OUT;
 
 void main() {
     gl_Position = MVP * vec4(position, 1);
-    interpolatedUV = uv0;
+    OUT.uv0 = uv0;
+    OUT.normal = normalize((M * vec4(normal, 1)).xyz);
+OUT.lightDirection = normalize( (lightMVP * vec4(0,0,1,0)).xyz ); // Directional Light
+OUT.shadowmapPos = lightMVP * vec4(position, 1);
 }
 )", R"(
-layout(location = 0) in vec2 interpolatedUV;
+layout(location = 0) in struct {
+vec2 uv0;
+vec3 normal;
+vec3 lightDirection;
+vec4 shadowmapPos;
+} IN;
 layout(location = 0) out vec3 color;
-layout(location = 1) uniform sampler2D tex;
+layout(location = 3) uniform sampler2D shadowmapColor;
+layout(location = 4) uniform sampler2D shadowmapDepth;
+layout(location = 16) uniform sampler2D tex;
 
 void main(){
-    color = texture(tex, interpolatedUV).rgb;
+    vec3 lightSpaceCoord = IN.shadowmapPos.xyz / IN.shadowmapPos.w;
+lightSpaceCoord = lightSpaceCoord * 0.5 + 0.5; // Transform to 0-1
+
+    vec3 albedo = texture(tex, IN.uv0).rgb;
+    vec3 lightLevel = dot(IN.normal, -IN.lightDirection) * texture(shadowmapColor, lightSpaceCoord.xy).rgb;
+    // TODO: Shadowmapping
+color = albedo * lightLevel;
+//color = IN.normal;
 }
 )"
 															  ));
-
-		transparentColorShader = context.resources.addResource(Shader(R"(
+		std::string mvpVertexShader = R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -74,13 +97,18 @@ layout(location = 0) uniform mat4 MVP;
 void main() {
     gl_Position = MVP * vec4(position, 1);
 }
-)", R"(
+)";
+		transparentColorShader = context.resources.addResource(Shader(mvpVertexShader, R"(
 layout(location = 0) out vec4 color;
 layout(location = 1) uniform vec4 colorUniform;
 
 void main(){
     color = colorUniform;
 }
+)"));
+
+		depthOnlyShader = context.resources.addResource(Shader(mvpVertexShader, R"(
+void main(){}
 )"));
 	}
 	

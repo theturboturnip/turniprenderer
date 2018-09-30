@@ -77,6 +77,15 @@ namespace TurnipRenderer{
 
 		constexpr static size_t WIDTH = 1280;
 		constexpr static size_t HEIGHT = 720;
+
+		struct Shadowmap {
+			GLuint colorBuffer;
+			GLuint depthBuffer;
+			glm::mat4 VP;
+		};
+		std::vector<Shadowmap> shadowmapsToUse;
+
+		void LogAvailableError();
 		
 	private:
 
@@ -100,6 +109,5 @@ namespace TurnipRenderer{
 		void drawMesh(Mesh& mesh);
 		void drawQuad(Shader& shader, GLuint buffer);
 		void drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
-		void LogAvailableError();
 	};
 }

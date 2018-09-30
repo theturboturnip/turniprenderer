@@ -13,14 +13,39 @@ namespace TurnipRenderer {
 		assert(dataPtr);
 		data = std::vector<unsigned char>(dataPtr, dataPtr + (width * height * channels));
 		stbi_image_free(dataPtr);
+
+		{
+			GLuint glError = glGetError();
+			if (glError){
+				fprintf(stderr, "Texture OpenGL Error Pre-Create: %d\n", glError);
+				assert(false);
+			}
+		}
 		
 		glGenTextures(1, &textureId);
 		glBindTexture(GL_TEXTURE_2D, textureId);
 
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);	
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+		{
+			GLuint glError = glGetError();
+			if (glError){
+				fprintf(stderr, "Texture OpenGL Error Pre-Set-Trilinear: %d\n", glError);
+				assert(false);
+			}
+		}
+
+		// TODO: Trilinear filtering is GL_LINEAR_MIPMAP_LINEAR, use that
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+		{
+			GLuint glError = glGetError();
+			if (glError){
+				fprintf(stderr, "Texture OpenGL Error Pre-Format: %d\n", glError);
+				assert(false);
+			}
+		}
 
 		GLenum imageFormat = GL_RED;
 		switch(channels){
@@ -41,5 +66,13 @@ namespace TurnipRenderer {
 		}
 		glTexImage2D(GL_TEXTURE_2D, 0, imageFormat, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data.data());
 		glGenerateMipmap(GL_TEXTURE_2D);
+
+		{
+			GLuint glError = glGetError();
+			if (glError){
+				fprintf(stderr, "Texture OpenGL Error: %d\n", glError);
+				assert(false);
+			}
+		}
 	}
 };

@@ -17,12 +17,17 @@ namespace TurnipRenderer {
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA8, directionalLight.shadowmapWidth, directionalLight.shadowmapHeight, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			context.LogAvailableError();
+			fprintf(stderr, "Created the relevant color textures\n");
 
 			glGenTextures(1, &directionalLight.shadowmapDepthBuffer);
 			glBindTexture(GL_TEXTURE_2D, directionalLight.shadowmapDepthBuffer);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, directionalLight.shadowmapWidth, directionalLight.shadowmapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+
+			context.LogAvailableError();
+			fprintf(stderr, "Created the relevant textures\n");
 			
 			glGenFramebuffers(1, &directionalLight.shadowmapFramebuffer);
 			glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapFramebuffer);
@@ -32,11 +37,8 @@ namespace TurnipRenderer {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directionalLight.shadowmapDepthBuffer, 0);
 			assert (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
-			glGenFramebuffers(1, &directionalLight.shadowmapDepthOnlyFramebuffer);
-			glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapDepthOnlyFramebuffer);
-			glDrawBuffers(0, nullptr);
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, directionalLight.shadowmapDepthBuffer, 0);
-			assert (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
+			context.LogAvailableError();
+			fprintf(stderr, "Created the relevant framebuffers\n");
 		}
 		// Determine the ortho projection matrix
 		glm::quat lightRotation = getComponent<const Transform*>(inputs)->worldRotation();
@@ -52,7 +54,7 @@ namespace TurnipRenderer {
 		glm::mat4 transformProjectionFromWorld = transformProjectionFromView * transformViewFromWorld;
 		// Render to buffer
 
-		glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapDepthOnlyFramebuffer);
+		glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapFramebuffer);
 		glViewport(0,0, directionalLight.shadowmapWidth, directionalLight.shadowmapHeight);
 
 		glEnable(GL_DEPTH_TEST);
@@ -60,8 +62,11 @@ namespace TurnipRenderer {
 			
 		glClear(GL_DEPTH_BUFFER_BIT);
 
+		context.LogAvailableError();
+		fprintf(stderr, "Started the opaque draw to the shadowmap\n");
+
 		// Opaque Draw
-		glUseProgram(context.getDebugShaders().debugOpaqueShader->programId);
+		glUseProgram(context.getDefaultShaders().depthOnlyShader->programId);
 		for (auto* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
 			if (entity->mesh && entity->isOpaque){
 				/*if (entity->shader && entity->material && entity->material->texture){
@@ -82,6 +87,9 @@ namespace TurnipRenderer {
 				glDrawElements(GL_TRIANGLES, entity->mesh->indices().size(), GL_UNSIGNED_INT, 0);
 			}
 		}
+
+		context.LogAvailableError();
+		fprintf(stderr, "Finished the opaque draw to the shadowmap\n");
 
 		// Transparent Draw (ignore order)
 		glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapFramebuffer);
@@ -105,5 +113,11 @@ namespace TurnipRenderer {
 				glDrawElements(GL_TRIANGLES, entity->mesh->indices().size(), GL_UNSIGNED_INT, 0);
 			}
 		}
+
+		context.shadowmapsToUse.push_back(Context::Shadowmap{
+				directionalLight.shadowmapColorBuffer,
+					directionalLight.shadowmapDepthBuffer,
+					transformProjectionFromWorld
+					});
 	}
 };
