@@ -23,11 +23,17 @@ namespace TurnipRenderer {
 			glGenTextures(1, &directionalLight.shadowmapDepthBuffer);
 			glBindTexture(GL_TEXTURE_2D, directionalLight.shadowmapDepthBuffer);
 			glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, directionalLight.shadowmapWidth, directionalLight.shadowmapHeight, 0, GL_DEPTH_COMPONENT, GL_FLOAT, nullptr);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE, GL_COMPARE_REF_TO_TEXTURE);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC, GL_LEQUAL);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_BORDER);
+			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_BORDER);
+			float borderDepth[] = { 1.0f, 1.0f, 1.0f, 1.0f };
+			glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderDepth);
 
 			context.LogAvailableError();
-			fprintf(stderr, "Created the relevant textures\n");
+			//fprintf(stderr, "Created the relevant textures\n");
 			
 			glGenFramebuffers(1, &directionalLight.shadowmapFramebuffer);
 			glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapFramebuffer);
@@ -38,7 +44,7 @@ namespace TurnipRenderer {
 			assert (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
 			context.LogAvailableError();
-			fprintf(stderr, "Created the relevant framebuffers\n");
+			//fprintf(stderr, "Created the relevant framebuffers\n");
 		}
 		// Determine the ortho projection matrix
 		glm::quat lightRotation = getComponent<const Transform*>(inputs)->worldRotation();
@@ -63,7 +69,7 @@ namespace TurnipRenderer {
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		context.LogAvailableError();
-		fprintf(stderr, "Started the opaque draw to the shadowmap\n");
+		//fprintf(stderr, "Started the opaque draw to the shadowmap\n");
 
 		// Opaque Draw
 		glUseProgram(context.getDefaultShaders().depthOnlyShader->programId);
@@ -89,7 +95,7 @@ namespace TurnipRenderer {
 		}
 
 		context.LogAvailableError();
-		fprintf(stderr, "Finished the opaque draw to the shadowmap\n");
+		//fprintf(stderr, "Finished the opaque draw to the shadowmap\n");
 
 		// Transparent Draw (ignore order)
 		glBindFramebuffer(GL_FRAMEBUFFER, directionalLight.shadowmapFramebuffer);

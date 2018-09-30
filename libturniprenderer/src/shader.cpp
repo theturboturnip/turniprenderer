@@ -71,17 +71,19 @@ vec4 shadowmapPos;
 } IN;
 layout(location = 0) out vec3 color;
 layout(location = 3) uniform sampler2D shadowmapColor;
-layout(location = 4) uniform sampler2D shadowmapDepth;
+layout(location = 4) uniform sampler2DShadow shadowmapDepth;
 layout(location = 16) uniform sampler2D tex;
 
 void main(){
     vec3 lightSpaceCoord = IN.shadowmapPos.xyz / IN.shadowmapPos.w;
 lightSpaceCoord = lightSpaceCoord * 0.5 + 0.5; // Transform to 0-1
+lightSpaceCoord.z -= 0.005; // Bias
 
     vec3 albedo = texture(tex, IN.uv0).rgb;
-    vec3 lightLevel = dot(IN.normal, -IN.lightDirection) * texture(shadowmapColor, lightSpaceCoord.xy).rgb;
-    // TODO: Shadowmapping
-color = albedo * lightLevel;
+    vec3 lightLevel = max(0.0, dot(IN.normal, -IN.lightDirection)) * texture(shadowmapColor, lightSpaceCoord.xy).rgb;
+lightLevel *= texture(shadowmapDepth, lightSpaceCoord);
+vec3 ambient = vec3(0.3, 0.3, 0.15);
+color = albedo * (lightLevel + ambient);
 //color = IN.normal;
 }
 )"

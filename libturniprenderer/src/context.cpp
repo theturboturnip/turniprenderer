@@ -30,8 +30,8 @@ namespace TurnipRenderer{
 		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
 		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
     
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 3 );
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 3 );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
+		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 6 );
 		SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
 		LogAvailableError();
@@ -363,7 +363,7 @@ void main(){
 
 	bool Context::renderFrame(){
 		LogAvailableError();
-		fprintf(stderr, "Starting frame\n");
+		//fprintf(stderr, "Starting frame\n");
 		
 		bool done = false;
 		input.onFrameStart();
@@ -488,7 +488,7 @@ void main(){
 					if (entity->shader && entity->material && entity->material->texture){
 						glUniformMatrix4fv(1, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&M));
-					glUniformMatrix4fv(2, 1, GL_FALSE,
+						glUniformMatrix4fv(2, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&lightMVP));
 					}
 					//LogAvailableError();
