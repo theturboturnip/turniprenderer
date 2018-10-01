@@ -54,7 +54,6 @@ namespace TurnipRenderer{
 		} renderPassData;
 
 		Context(std::string name);
-		~Context();
 		bool renderFrame();
 		void initDemoScene();
 		void initWindow();
@@ -78,18 +77,20 @@ namespace TurnipRenderer{
 		constexpr static size_t OPENGL_MINOR = 3;
 
 		struct Shadowmap {
-			GLuint colorBuffer;
-			GLuint depthBuffer;
+			ResourceHandle<const ColorBuffer> colorBuffer;
+			ResourceHandle<const DepthBuffer> depthBuffer;
 			glm::mat4 VP;
 		};
 		std::vector<Shadowmap> shadowmapsToUse;
 
 		//void LogAvailableError();
+
+		// TODO: Figure out a way to let Systems request renderer access
+		// Then this should be made private
+		Renderer renderer;
 		
 	private:
 
-		Renderer renderer;
-		
 		Input input;
 		
 		ImGuiIO* io = nullptr;

@@ -77,12 +77,15 @@ namespace TurnipRenderer {
 			// TODO: Fail in some way when container == nullptr?
             return container->resource;
         }
-		operator T*() const {
+		explicit operator T*() const {
 			if (container)
 				return &container->resource;
 			return nullptr;
 		}
-		operator bool() const {
+		explicit operator bool() const {
+			return isValid();
+		}
+		inline bool isValid() const {
 			if (container) return container->refCount > 0;
 			return false;
 		}

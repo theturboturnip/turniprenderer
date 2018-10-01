@@ -38,6 +38,8 @@ namespace TurnipRenderer {
 					 
 		struct Compare {
 			constexpr Compare() {};
+			Compare(GLenum compareMode, GLenum compareFunc)
+				: compareMode(compareMode), compareFunc(compareFunc) {}
 			GLenum compareMode = GL_NONE;
 			GLenum compareFunc = GL_LEQUAL;
 		} compare;
@@ -57,12 +59,13 @@ namespace TurnipRenderer {
 	// TODO: Destructor
 	struct AddressableBuffer {
 		AddressableBuffer(GLuint handle, TextureConfig config)
-			: handle(handle), config(config) {}
-		GLuint handle;
+			: config(config), handle(handle)  {}
 		TextureConfig config;
 
 	private:
 		friend class Renderer;
+
+		GLuint handle;
 		operator GLuint() const {
 			return handle;
 		}
@@ -76,10 +79,24 @@ namespace TurnipRenderer {
 		using AddressableBuffer::AddressableBuffer;
 	};
 	struct FrameBuffer {
+		FrameBuffer(GLuint handle,
+					glm::uvec2 size,
+					std::vector<ResourceHandle<const ColorBuffer>> colorBuffers,
+					ResourceHandle<const DepthBuffer> depthBuffer)
+			: size(size), colorBuffers(colorBuffers), depthBuffer(depthBuffer), handle(handle) {}
+					
 		glm::uvec2 size;
 
 		std::vector<ResourceHandle<const ColorBuffer>> colorBuffers;
 		ResourceHandle<const DepthBuffer> depthBuffer;
+
+	private:
+		friend class Renderer;
+		
+		GLuint handle;
+		operator GLuint() const {
+			return handle;
+		}
 	};
 	
 	class Renderer : ContextAware {
@@ -90,17 +107,17 @@ namespace TurnipRenderer {
 		~Renderer();
 
 		inline void bindFrameBuffer(const ResourceHandle<const FrameBuffer>& fb){
-			bindFrameBuffer(static_cast<GLuint>(fb), fb->size);
+			bindFrameBuffer(static_cast<GLuint>(*fb), fb->size);
 		}
 		inline void bindWindowFramebuffer(){
 			bindFrameBuffer(0, windowSize);
 		}
 
 		inline void bindTextureToSlot(GLenum slot, const ResourceHandle<const ColorBuffer>& cb){
-			bindTextureToSlot(slot, static_cast<GLuint>(cb));
+			bindTextureToSlot(slot, static_cast<GLuint>(*cb));
 		}
 		inline void bindTextureToSlot(GLenum slot, const ResourceHandle<const DepthBuffer>& db){
-			bindTextureToSlot(slot, static_cast<GLuint>(db));
+			bindTextureToSlot(slot, static_cast<GLuint>(*db));
 		}
 
 		// TODO: Uniform Binding

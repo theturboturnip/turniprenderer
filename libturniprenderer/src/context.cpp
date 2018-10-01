@@ -332,10 +332,9 @@ void main(){
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 
-		glViewport(0,0, WIDTH,HEIGHT);
 		// Depth Pass
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
+			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 			
 			glDisable(GL_BLEND);
 			
@@ -357,7 +356,7 @@ void main(){
 			}
 		}
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
+			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 		// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
 			glClearColor(1,0.5,1,0);
 
@@ -375,8 +374,7 @@ void main(){
 				if (entity->mesh && entity->isOpaque){
 					if (entity->shader && entity->material && entity->material->texture){
 						glUseProgram(entity->shader->programId);
-						glActiveTexture(GL_TEXTURE0);
-						glBindTexture(GL_TEXTURE_2D, entity->material->texture->textureId);
+						renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->textureId);
 						glUniform1i(16, 0); // Bind uniform 16 to texture 0
 					}else{
 						glUseProgram(debugShaders.debugOpaqueShader->programId);
@@ -386,11 +384,9 @@ void main(){
 					glm::mat4 lightMVP;
 					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material && entity->material->texture){
 						//fprintf(stderr, "Using a shadowmap\n");
-						glActiveTexture(GL_TEXTURE1);
-						glBindTexture(GL_TEXTURE_2D, shadowmapsToUse[0].colorBuffer);
+						renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
 						glUniform1i(3, 1);
-						glActiveTexture(GL_TEXTURE2);
-						glBindTexture(GL_TEXTURE_2D, shadowmapsToUse[0].depthBuffer);
+						renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
 						glUniform1i(4, 2);
 						lightMVP = shadowmapsToUse[0].VP * M;
 					}
@@ -417,8 +413,7 @@ void main(){
 		}
 		// Draw to transparency buffer
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.transparencyBucketingFramebuffer);
-			glViewport(0,0, WIDTH,HEIGHT);
+			renderer.bindFrameBuffer(renderPassData.transparencyBucketingFramebuffer);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
 			glUseProgram(debugTransparentProgram->programId);
@@ -446,8 +441,7 @@ void main(){
 		}
 		// Blend transparency buffer onto opaque buffer
 		{
-			glBindFramebuffer(GL_FRAMEBUFFER, renderPassData.opaqueFramebuffer);
-			glViewport(0,0, WIDTH,HEIGHT);
+			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 			
 			glEnable(GL_BLEND);
 			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -456,20 +450,16 @@ void main(){
 			glDepthMask(GL_FALSE);
 
 			renderer.drawFullscreenQuadAdvanced(*transparencyResolve, [this]() {
-					glActiveTexture(GL_TEXTURE0);
-					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[0]);
+					renderer.bindTextureToSlot(GL_TEXTURE0, renderPassData.transparencyColorBucketBuffers[0]);
 					glUniform1i(0, 0); // Bind uniform 0 to texture 0
 					
-					glActiveTexture(GL_TEXTURE1);
-					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[1]);
+					renderer.bindTextureToSlot(GL_TEXTURE1, renderPassData.transparencyColorBucketBuffers[1]);
 					glUniform1i(1, 1); // Bind uniform 0 to texture 0
 					
-					glActiveTexture(GL_TEXTURE2);
-					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[2]);
+					renderer.bindTextureToSlot(GL_TEXTURE2, renderPassData.transparencyColorBucketBuffers[2]);
 					glUniform1i(2, 2); // Bind uniform 0 to texture 0
 					
-					glActiveTexture(GL_TEXTURE3);
-					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[3]);
+					renderer.bindTextureToSlot(GL_TEXTURE3, renderPassData.transparencyColorBucketBuffers[3]);
 					glUniform1i(3, 3); // Bind uniform 0 to texture 0
 				});
 
@@ -481,8 +471,7 @@ void main(){
 			// TODO: Actual Postprocessing
 			int currentPostprocessingBuffer = 0;
 			// Draw the final result to the screen
-			glBindFramebuffer(GL_FRAMEBUFFER, 0);
-			glViewport(0,0, WIDTH,HEIGHT);
+			renderer.bindWindowFramebuffer();
 			
 			glDisable(GL_BLEND);
 			

@@ -196,22 +196,22 @@ namespace TurnipRenderer {
 		assert(colorBuffersCount <= 8);
 		std::vector<GLenum> drawBuffers(colorBuffersCount);
 		for (auto i = 0u; i < colorBuffersCount; i++){
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, colorBuffers[i], 0);
+			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, *colorBuffers[i], 0);
 			drawBuffers.push_back(GL_COLOR_ATTACHMENT0 + i);
 		}
 		glDrawBuffers(drawBuffers.size(), drawBuffers.data());
 		checkErrors("createFramebuffer - drawBuffers");
 		if (depthBuffer)
-			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, depthBuffer, 0);
+			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *depthBuffer, 0);
 		checkErrors("createFramebuffer");
 		assert (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
 
-		return resources.addResource(FrameBuffer {
-			colorBuffersCount ? colorBuffers[0]->config.size : depthBuffer->config.size,
-
-				std::vector<ResourceHandle<const ColorBuffer>>(colorBuffers, colorBuffers + colorBuffersCount),
-				depthBuffer
-				});
+		return resources.addResource(FrameBuffer(
+										 frameBuffer,
+										 (colorBuffersCount ? colorBuffers[0]->config.size : depthBuffer->config.size),
+										 std::vector<ResourceHandle<const ColorBuffer>>(colorBuffers, colorBuffers + colorBuffersCount),
+										 depthBuffer
+										 ));
 	}
 
 	void Renderer::startFrame(){
