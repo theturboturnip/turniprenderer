@@ -83,8 +83,6 @@ namespace TurnipRenderer{
 		};
 		std::vector<Shadowmap> shadowmapsToUse;
 
-		//void LogAvailableError();
-
 		// TODO: Figure out a way to let Systems request renderer access
 		// Then this should be made private
 		Renderer renderer;
@@ -100,7 +98,6 @@ namespace TurnipRenderer{
 		DebugShaders debugShaders;
 		DefaultShaders defaultShaders;
 
-		//ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugTransparentProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
 		ResourceHandle<Shader> transparencyResolve;

@@ -40,8 +40,8 @@ namespace TurnipRenderer {
 				);
 		}
 
-		// Prep for the rendering
-        // Determine the ortho projection matrix
+		// Prep for rendering
+		// Determine the ortho matrix
 		glm::quat lightRotation = getComponent<const Transform*>(inputs)->worldRotation();
 		Bounds objectBounds;
 		// TODO: Does transforming each one individually make the frustum smaller?
@@ -54,7 +54,7 @@ namespace TurnipRenderer {
 		glm::mat4 transformViewFromWorld = glm::inverse( glm::mat4_cast(lightRotation) * glm::translate(objectBounds.getCentre()) );
 		glm::mat4 transformProjectionFromWorld = transformProjectionFromView * transformViewFromWorld;
 
-        // Render to buffer
+		// Render to buffer
 		context.renderer.setOperation("DirLight Shadowmap Rendering");
 		context.renderer.bindFrameBuffer(directionalLight.shadowmapFramebuffer);
 
@@ -64,6 +64,7 @@ namespace TurnipRenderer {
 		glClear(GL_DEPTH_BUFFER_BIT);
 
 		// Opaque Draw
+		context.renderer.setOperation("DirLight Shadowmap Opaque Rendering");
 		glUseProgram(context.getDefaultShaders().depthOnlyShader->programId);
 		for (auto* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
 			if (entity->mesh && entity->isOpaque){
@@ -76,6 +77,7 @@ namespace TurnipRenderer {
 		}
 
 		// Transparent Draw (ignore order)
+		context.renderer.setOperation("DirLight Shadowmap Transparent Rendering");
 		glClearColor(directionalLight.color.r, directionalLight.color.g, directionalLight.color.b,0);
 		glClear(GL_COLOR_BUFFER_BIT);
 		glEnable(GL_BLEND);

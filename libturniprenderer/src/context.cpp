@@ -242,6 +242,7 @@ void main(){
 			glDisable(GL_BLEND);
 			
 			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LESS);
 			glDepthMask(GL_TRUE);
 
 			glClear(GL_DEPTH_BUFFER_BIT);
@@ -266,6 +267,7 @@ void main(){
 			glDisable(GL_BLEND);
 			
 			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_EQUAL);
 			glDepthMask(GL_FALSE);
 			
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -315,6 +317,7 @@ void main(){
 			glBlendFunc(GL_ONE, GL_ONE);
 
 			glEnable(GL_DEPTH_TEST);
+			glDepthFunc(GL_LESS);
 			glDepthMask(GL_FALSE);
 			
 			glUniform1f(1, cameraData.depthMin);
