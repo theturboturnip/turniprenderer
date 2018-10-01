@@ -121,6 +121,7 @@ namespace TurnipRenderer {
 		}
 
 		// TODO: Uniform Binding
+		// TODO: Pipelines. Have a Pipeline object which can be used to apply shader-agnostic state all at once, do diffs if you want.
 		
 		void drawMesh(Mesh& mesh);
 		void drawFullscreenQuad(Shader& shader, const ResourceHandle<const ColorBuffer>& buffer);

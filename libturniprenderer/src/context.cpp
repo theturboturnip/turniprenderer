@@ -60,40 +60,6 @@ namespace TurnipRenderer{
 			};
 			return renderer.createDepthBuffer(config);
 		};
-		/*auto createFramebuffer = [this](GLuint colorTexture, GLuint depthTexture = 0) -> GLuint {
-			GLuint frameBuffer;
-			glGenFramebuffers(1, &frameBuffer);
-			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, colorTexture, 0);
-			GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0};
-			glDrawBuffers(1, drawBuffers);
-			if (depthTexture > 0){
-				glBindRenderbuffer(GL_RENDERBUFFER, depthTexture);
-				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthTexture);
-			}
-
-			//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-				//LogAvailableError();
-			return frameBuffer;
-		};*/
-		/*auto createTransparencyFramebuffer = [this]() -> GLuint {
-			GLuint frameBuffer;
-			glGenFramebuffers(1, &frameBuffer);
-			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, renderPassData.transparencyColorBucketBuffers[0], 0);
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT1, renderPassData.transparencyColorBucketBuffers[1], 0);
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT2, renderPassData.transparencyColorBucketBuffers[2], 0);
-			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT3, renderPassData.transparencyColorBucketBuffers[3], 0);
-
-			GLenum drawBuffers[] = {GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3};
-			glDrawBuffers(4, drawBuffers);
-			glBindRenderbuffer(GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
-			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
-
-			//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-				//LogAvailableError();
-			return frameBuffer;
-			};*/
 
 		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
 		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
@@ -111,66 +77,6 @@ namespace TurnipRenderer{
 	}
 
 	void Context::initDemoScene(){
-		
-		
-		/*ResourceHandle<Mesh> planeMesh;
-		{
-			Mesh::MeshData planeData;
-			const auto planeNormal = glm::normalize(glm::vec3(0, 1, 1));
-			const auto planeTangent = glm::normalize(glm::vec3(0, 1, -1));
-			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(-1, -1, -1),
-							planeNormal,
-							planeTangent,
-							glm::vec2(0, 0)
-							});
-			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(1, -1, -1),
-							planeNormal,
-							planeTangent,
-							glm::vec2(1, 0)
-							});
-			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(-1, 1, 1),
-							planeNormal,
-							planeTangent,
-							glm::vec2(0, 1)
-							});
-			planeData.vertices.push_back(Mesh::Vertex{
-						glm::vec3(1, 1, 1),
-							planeNormal,
-							planeTangent,
-							glm::vec2(1, 1)
-							});
-
-			{
-				planeData.indices.push_back(0);
-				planeData.indices.push_back(1);
-				planeData.indices.push_back(2);
-			}
-			{
-				planeData.indices.push_back(1);
-				planeData.indices.push_back(2);
-				planeData.indices.push_back(3);
-			}
-
-			planeMesh = resources.addResource(Mesh(planeData));
-		}
-		scene.addObjectToEndOfRoot("Plane", glm::vec3(0,0,0))->mesh = planeMesh;
-
-		auto* plane1 = scene.addObjectToEndOfRoot("Transparent Plane #1", glm::vec3(1,0,2));
-		plane1->mesh = quad;
-		plane1->isOpaque = false;
-		plane1->transparencyColor = glm::vec4(1, 0.1, 0.1, 0.5);
-		auto* plane2 = scene.addObjectToEndOfObject(*plane1, "Transparent Plane #2", glm::vec3(0.25,0,2));
-		plane2->mesh = quad;
-		//plane2->isOpaque = false;
-		plane2->transparencyColor = glm::vec4(0.1, 1, 0.1, 0.5);
-		auto* plane3 = scene.addObjectToEndOfObject(*plane2, "Transparent Plane #3", glm::vec3(0.25,0,2));
-		plane3->mesh = quad;
-		plane3->isOpaque = false;
-		plane3->transparencyColor = glm::vec4(0.1, 0.1, 1, 0.5);*/
-
 		scene.addModel("assets/sponza/sponza.fbx");
 
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
@@ -284,7 +190,7 @@ void main(){
 
 			if (event.type == SDL_QUIT)
 				done = true;
-			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE/* && event.window.windowID == SDL_GetWindowID(sdlWindow)*/)
+			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(renderer.sdlWindow))
 				done = true;
 
 			if (!io->WantCaptureMouse){
@@ -312,8 +218,6 @@ void main(){
 				}
 			}
 		}
-
-
 		
 		glCullFace(GL_BACK);
 
@@ -324,8 +228,6 @@ void main(){
 				system->runOnEntityIfValid(entity);
 			}
 		}
-		//LogAvailableError();
-		//fprintf(stderr, "Finished running systems\n");
 
 		renderer.startFrame();
 		
@@ -334,12 +236,12 @@ void main(){
 
 		// Depth Pass
 		{
+			renderer.setOperation("Opaque Depth Prepass");
 			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 			
 			glDisable(GL_BLEND);
 			
 			glEnable(GL_DEPTH_TEST);
-			//glDepthFunc(GL_LESS);
 			glDepthMask(GL_TRUE);
 
 			glClear(GL_DEPTH_BUFFER_BIT);
@@ -356,19 +258,17 @@ void main(){
 			}
 		}
 		{
+			renderer.setOperation("Opaque Draw");
 			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
-		// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
+			// Note: Don't clear to white here otherwise if there's nothing in the scene it will look like the program has crashed
 			glClearColor(1,0.5,1,0);
 
 			glDisable(GL_BLEND);
 			
 			glEnable(GL_DEPTH_TEST);
-			//glDepthFunc(GL_LEQUAL);
-			glDepthMask(GL_TRUE);
+			glDepthMask(GL_FALSE);
 			
-			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
-			//LogAvailableError();
+			glClear(GL_COLOR_BUFFER_BIT);
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
@@ -383,7 +283,6 @@ void main(){
 					glm::mat4 MVP = transformProjectionFromWorld * M;
 					glm::mat4 lightMVP;
 					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material && entity->material->texture){
-						//fprintf(stderr, "Using a shadowmap\n");
 						renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
 						glUniform1i(3, 1);
 						renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
@@ -393,26 +292,20 @@ void main(){
 
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
-					//LogAvailableError();
-					//fprintf(stderr, "Passing in alt matrices\n");
 					if (entity->shader && entity->material && entity->material->texture){
 						glUniformMatrix4fv(1, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&M));
 						glUniformMatrix4fv(2, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&lightMVP));
 					}
-					//LogAvailableError();
 
 					renderer.drawMesh(*entity->mesh);
 				}
 			}
-
-			//if (shadowmapsToUse.size() > 0){
-			//	fprintf(stderr, "Used a shadowmap for the opaque rendering\n");
-			//}
 		}
 		// Draw to transparency buffer
 		{
+			renderer.setOperation("Transparency Draw");
 			renderer.bindFrameBuffer(renderPassData.transparencyBucketingFramebuffer);
 			glClearColor(0,0,0,0);
 			glClear(GL_COLOR_BUFFER_BIT);
@@ -422,7 +315,6 @@ void main(){
 			glBlendFunc(GL_ONE, GL_ONE);
 
 			glEnable(GL_DEPTH_TEST);
-			//glDepthFunc(GL_LESS);
 			glDepthMask(GL_FALSE);
 			
 			glUniform1f(1, cameraData.depthMin);
@@ -437,10 +329,10 @@ void main(){
 					renderer.drawMesh(*entity->mesh);
 				}
 			}
-			//fprintf(stderr, "Finished the transparency pass\n");
 		}
 		// Blend transparency buffer onto opaque buffer
 		{
+			renderer.setOperation("Transparency Resolve");
 			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 			
 			glEnable(GL_BLEND);
@@ -468,7 +360,8 @@ void main(){
 		}
 		// Postprocessing Effects
 		{
-			// TODO: Actual Postprocessing
+			renderer.setOperation("Post-Processing");
+            // TODO: Actual Postprocessing
 			int currentPostprocessingBuffer = 0;
 			// Draw the final result to the screen
 			renderer.bindWindowFramebuffer();
@@ -479,14 +372,11 @@ void main(){
 			glDepthMask(GL_FALSE);
 
 			renderer.drawFullscreenQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
-
-			//fprintf(stderr, "Finished the postprocess pass\n");
-
 		}
-		//LogAvailableError();
 
 		// ImGui
 		{
+			renderer.setOperation("ImGui - Really shouldn't throw");
 			ImGui_ImplOpenGL3_NewFrame();
 			ImGui_ImplSDL2_NewFrame(renderer.sdlWindow);
 			ImGui::NewFrame();
@@ -510,23 +400,8 @@ void main(){
 			
 			ImGui::Render();
 			ImGui_ImplOpenGL3_RenderDrawData(ImGui::GetDrawData());
-
-			//fprintf(stderr, "Finished the ImGui pass\n");
-
 		}
-		// TODO: Should this be done in the Renderer?
 		renderer.endFrame();
 		return done;
 	}
-
-	/*void Context::LogAvailableError(){
-		const char* sdlError = SDL_GetError();
-		if (*sdlError != '\0')
-			fprintf(stderr, "SDL Error: %s\n", sdlError);
-		GLuint glError = glGetError();
-		if (glError){
-			fprintf(stderr, "OpenGL Error: %d\n", glError);
-			assert(false);
-		}
-	}*/
 };
