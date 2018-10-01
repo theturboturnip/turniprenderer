@@ -2,36 +2,28 @@
 
 #include "private/external/gl.h"
 #include "private/external/glm.h"
-#include "private/external/sdl.h"
+#include <SDL.h>
+
+#include <functional>
 
 #include "context_aware.h"
 #include "resource_manager.h"
 #include "mesh.h"
+#include "shader.h"
 
 namespace TurnipRenderer {
-	struct BufferConfig {
-		BufferConfig(glm::ivec2 size, Format format, Filter filtering, GLenum wrapMode, Compare compare = {})
-			: BufferConfig(size, format, filtering, AddressMode(wrapMode), compare) {}
-		BufferConfig(glm::ivec2 size, Format format, Filter filtering, glm::vec4 borderColor, Compare compare = {})
-			: BufferConfig(size, format, filtering, AddressMode(borderColor), compare) {}
-		BufferConfig(glm::ivec2 size, Format format, Filter filtering, AddressMode addressMode, Compare compare = {})
-			: size(size),
-			  format(format),
-			  filtering(filtering),
-			  addressMode(addressMode),
-			  compare(compare) {}
-
-		glm::ivec2 size;
+	struct TextureConfig {
+		glm::uvec2 size;
 
 		struct Format {
 			GLint internalFormat;
 			GLenum format;
-			GLenum type;
-		} format;
+			GLenum dataType;
+		} formatInfo;
 
 		struct Filter {
-			GLenum minFilter;
-			GLenum magFilter;
+			GLenum min = GL_LINEAR;
+			GLenum mag = GL_LINEAR;
 		} filtering;
 
 		struct AddressMode {
@@ -45,24 +37,46 @@ namespace TurnipRenderer {
 		} addressMode;
 					 
 		struct Compare {
-			constexpr Compare() = default;
+			constexpr Compare() {};
 			GLenum compareMode = GL_NONE;
 			GLenum compareFunc = GL_LEQUAL;
 		} compare;
+
+		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, GLenum wrapMode, Compare compare = Compare())
+			: TextureConfig(size, formatInfo, filtering, AddressMode(wrapMode), compare) {}
+		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, glm::vec4 borderColor, Compare compare = Compare())
+			: TextureConfig(size, formatInfo, filtering, AddressMode(borderColor), compare) {}
+		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, AddressMode addressMode, Compare compare = Compare())
+			: size(size),
+			  formatInfo(formatInfo),
+			  filtering(filtering),
+			  addressMode(addressMode),
+			  compare(compare) {}
 	};
 
+	// TODO: Destructor
 	struct AddressableBuffer {
+		AddressableBuffer(GLuint handle, TextureConfig config)
+			: handle(handle), config(config) {}
 		GLuint handle;
-		BufferConfig config;
+		TextureConfig config;
 
+	private:
+		friend class Renderer;
 		operator GLuint() const {
 			return handle;
 		}
 	};
-	struct ColorBuffer : public AddressableBuffer {};
-	struct DepthBuffer : public AddressableBuffer {};
+	// TODO: Will 'using ColorBuffer = AddressableBuffer;' keep the type safety?
+	// If so, then migrate to that.
+	struct ColorBuffer : public AddressableBuffer {
+		using AddressableBuffer::AddressableBuffer;
+	};
+	struct DepthBuffer : public AddressableBuffer {
+		using AddressableBuffer::AddressableBuffer;
+	};
 	struct FrameBuffer {
-		glm::ivec2 size;
+		glm::uvec2 size;
 
 		std::vector<ResourceHandle<const ColorBuffer>> colorBuffers;
 		ResourceHandle<const DepthBuffer> depthBuffer;
@@ -72,29 +86,52 @@ namespace TurnipRenderer {
 	public:
 		Renderer(Context& context)
 			: ContextAware(context) {}
-		void initialize(std::string windowName, size_t windowWidth, size_t windowHeight, int openGlMajor, int openGlMinor);
+		void initialize(std::string windowName, glm::uvec2 windowSize, int openGlMajor, int openGlMinor);
 		~Renderer();
 
-		void bindFrameBuffer(ResourceHandle<const FrameBuffer>&);
-		void bindWindowFramebuffer();
+		inline void bindFrameBuffer(const ResourceHandle<const FrameBuffer>& fb){
+			bindFrameBuffer(static_cast<GLuint>(fb), fb->size);
+		}
+		inline void bindWindowFramebuffer(){
+			bindFrameBuffer(0, windowSize);
+		}
 
-		void bindTextureToSlot(GLenum slot, ResourceHandle<const ColorBuffer>&);
-		void bindTextureToSlot(GLenum slot, ResourceHandle<const DepthBuffer>&);
+		inline void bindTextureToSlot(GLenum slot, const ResourceHandle<const ColorBuffer>& cb){
+			bindTextureToSlot(slot, static_cast<GLuint>(cb));
+		}
+		inline void bindTextureToSlot(GLenum slot, const ResourceHandle<const DepthBuffer>& db){
+			bindTextureToSlot(slot, static_cast<GLuint>(db));
+		}
+
+		// TODO: Uniform Binding
 		
 		void drawMesh(Mesh& mesh);
-		void drawFullscreenQuad(Shader& shader, GLuint buffer);
+		void drawFullscreenQuad(Shader& shader, const ResourceHandle<const ColorBuffer>& buffer);
 		void drawFullscreenQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
 
-		ResourceHandle<const ColorBuffer> createColorBuffer(BufferConfig config);
-		ResourceHandle<const DepthBuffer> createDepthBuffer(BufferConfig);
+		ResourceHandle<const ColorBuffer> createColorBuffer(TextureConfig);
+		ResourceHandle<const DepthBuffer> createDepthBuffer(TextureConfig);
 		template<class Container>
-		ResourceHandle<const FrameBuffer> createFramebuffer(Container colorBuffers, GLuint depthBuffer = 0){
+		ResourceHandle<const FrameBuffer> createFramebuffer(const Container& colorBuffers, ResourceHandle<const DepthBuffer> depthBuffer = nullptr){
 			return createFramebuffer(colorBuffers.data(), colorBuffers.size(), depthBuffer);
 		}
-		ResourceHandle<const FrameBuffer> createFramebuffer(ResourceHandle<const ColorBuffer>* colorBuffers, GLsizet colorBuffersCount, ResourceHandle<const DepthBuffer> depthBuffer = 0);
+		ResourceHandle<const FrameBuffer> createFramebuffer(const ResourceHandle<const ColorBuffer>& colorBuffer, ResourceHandle<const DepthBuffer> depthBuffer = nullptr){
+			return createFramebuffer(&colorBuffer, 1, depthBuffer);
+		}
+		ResourceHandle<const FrameBuffer> createFramebuffer(const ResourceHandle<const ColorBuffer>* colorBuffers, size_t colorBuffersCount, ResourceHandle<const DepthBuffer> depthBuffer = nullptr);
+
+		inline void setOperation(const char* operationMessage){
+			currentOperationMessage = operationMessage;
+		}
 
 	private:
+		friend class Context;
+		void startFrame();
+		void endFrame();
+		
+		void bindFrameBuffer(GLuint framebufferHandle, glm::uvec2 fbSize);
 		void bindTextureToSlot(GLenum slot, GLuint textureHandle);
+		GLuint createTextureBuffer(const TextureConfig&);
 		
 		ResourceManager<ColorBuffer, DepthBuffer, FrameBuffer> resources;
 
@@ -102,7 +139,9 @@ namespace TurnipRenderer {
 		
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
+		glm::uvec2 windowSize;
 
-		void checkErrors();
+		const char* currentOperationMessage = nullptr;
+		void checkErrors(const char* possibleErrorContext = nullptr);
 	};
 }

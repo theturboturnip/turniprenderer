@@ -23,19 +23,14 @@ namespace TurnipRenderer{
 	void Context::initWindow(){
 		renderer.initialize(
 							name,
-							WIDTH,
-							HEIGHT,
+							glm::uvec2(WIDTH, HEIGHT),
 							OPENGL_MAJOR,
 							OPENGL_MINOR
 							);
 		
 		createFramebuffers();
 
-		IMGUI_CHECKVERSION();
-		ImGui::CreateContext();
 		io = &ImGui::GetIO();
-		ImGui_ImplSDL2_InitForOpenGL(sdlWindow, openGlContext);
-		ImGui_ImplOpenGL3_Init("#version 150");
 		ImGui::StyleColorsDark();
 
 		debugShaders.createShaders();
@@ -46,23 +41,26 @@ namespace TurnipRenderer{
 
 
 	void Context::createFramebuffers(){
-		auto createColorBuffer = [this](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT) -> GLuint {
-			GLuint colorBuffer;
-			glGenTextures(1, &colorBuffer);
-			glBindTexture(GL_TEXTURE_2D, colorBuffer);
-			glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, WIDTH, HEIGHT, 0, format, type, nullptr);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
-			glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-			return colorBuffer;
+		auto createColorBuffer = [this](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT){
+			TextureConfig config = {
+				glm::uvec2(WIDTH, HEIGHT),
+				{ internalFormat, format, type },
+				{ GL_NEAREST, GL_NEAREST },
+				GL_CLAMP_TO_EDGE				
+			};
+			
+			return renderer.createColorBuffer(config);
 		};
-		auto createDepthBuffer = []() -> GLuint {
-			GLuint renderBuffer;
-			glGenRenderbuffers(1, &renderBuffer);
-			glBindRenderbuffer(GL_RENDERBUFFER, renderBuffer);
-			glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH_COMPONENT, WIDTH, HEIGHT);
-			return renderBuffer;
+		auto createDepthBuffer = [this]() {
+			TextureConfig config = {
+				glm::uvec2(WIDTH, HEIGHT),
+				{ GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT },
+				{ GL_NEAREST, GL_NEAREST },
+				GL_CLAMP_TO_EDGE				
+			};
+			return renderer.createDepthBuffer(config);
 		};
-		auto createFramebuffer = [this](GLuint colorTexture, GLuint depthTexture = 0) -> GLuint {
+		/*auto createFramebuffer = [this](GLuint colorTexture, GLuint depthTexture = 0) -> GLuint {
 			GLuint frameBuffer;
 			glGenFramebuffers(1, &frameBuffer);
 			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
@@ -74,11 +72,11 @@ namespace TurnipRenderer{
 				glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, depthTexture);
 			}
 
-			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-				LogAvailableError();
+			//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				//LogAvailableError();
 			return frameBuffer;
-		};
-		auto createTransparencyFramebuffer = [this]() -> GLuint {
+		};*/
+		/*auto createTransparencyFramebuffer = [this]() -> GLuint {
 			GLuint frameBuffer;
 			glGenFramebuffers(1, &frameBuffer);
 			glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
@@ -92,10 +90,10 @@ namespace TurnipRenderer{
 			glBindRenderbuffer(GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
 			glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_RENDERBUFFER, renderPassData.transparencyDepthBuffer);
 
-			if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-				LogAvailableError();
+			//if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+				//LogAvailableError();
 			return frameBuffer;
-		};
+			};*/
 
 		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
 		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
@@ -106,10 +104,10 @@ namespace TurnipRenderer{
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
 		renderPassData.transparencyDepthBuffer = renderPassData.opaqueDepthBuffer;//createDepthBuffer();
 		
-		renderPassData.opaqueFramebuffer = createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
-		renderPassData.postProcessingFramebuffers[0] = createFramebuffer(renderPassData.postProcessBuffers[0]);
-		renderPassData.postProcessingFramebuffers[1] = createFramebuffer(renderPassData.postProcessBuffers[1]);
-		renderPassData.transparencyBucketingFramebuffer = createTransparencyFramebuffer();
+		renderPassData.opaqueFramebuffer = renderer.createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
+		renderPassData.postProcessingFramebuffers[0] = renderer.createFramebuffer(renderPassData.postProcessBuffers[0]);
+		renderPassData.postProcessingFramebuffers[1] = renderer.createFramebuffer(renderPassData.postProcessBuffers[1]);
+		renderPassData.transparencyBucketingFramebuffer = renderer.createFramebuffer(renderPassData.transparencyColorBucketBuffers, 4, renderPassData.transparencyDepthBuffer);
 	}
 
 	void Context::initDemoScene(){
@@ -286,7 +284,7 @@ void main(){
 
 			if (event.type == SDL_QUIT)
 				done = true;
-			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE && event.window.windowID == SDL_GetWindowID(sdlWindow))
+			else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_CLOSE/* && event.window.windowID == SDL_GetWindowID(sdlWindow)*/)
 				done = true;
 
 			if (!io->WantCaptureMouse){
@@ -315,6 +313,8 @@ void main(){
 			}
 		}
 
+
+		
 		glCullFace(GL_BACK);
 
 		shadowmapsToUse.clear();
@@ -326,6 +326,8 @@ void main(){
 		}
 		//LogAvailableError();
 		//fprintf(stderr, "Finished running systems\n");
+
+		renderer.startFrame();
 		
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
@@ -350,7 +352,7 @@ void main(){
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
 
-					drawMesh(*entity->mesh);
+					renderer.drawMesh(*entity->mesh);
 				}
 			}
 		}
@@ -367,7 +369,7 @@ void main(){
 			
 			glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-			LogAvailableError();
+			//LogAvailableError();
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->mesh && entity->isOpaque){
@@ -405,7 +407,7 @@ void main(){
 					}
 					//LogAvailableError();
 
-					drawMesh(*entity->mesh);
+					renderer.drawMesh(*entity->mesh);
 				}
 			}
 
@@ -437,7 +439,7 @@ void main(){
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
 					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
-					drawMesh(*entity->mesh);
+					renderer.drawMesh(*entity->mesh);
 				}
 			}
 			//fprintf(stderr, "Finished the transparency pass\n");
@@ -453,7 +455,7 @@ void main(){
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(GL_FALSE);
 
-			drawQuadAdvanced(*transparencyResolve, [this]() {
+			renderer.drawFullscreenQuadAdvanced(*transparencyResolve, [this]() {
 					glActiveTexture(GL_TEXTURE0);
 					glBindTexture(GL_TEXTURE_2D, renderPassData.transparencyColorBucketBuffers[0]);
 					glUniform1i(0, 0); // Bind uniform 0 to texture 0
@@ -487,17 +489,17 @@ void main(){
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(GL_FALSE);
 
-			drawQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
+			renderer.drawFullscreenQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 
 			//fprintf(stderr, "Finished the postprocess pass\n");
 
 		}
-		LogAvailableError();
+		//LogAvailableError();
 
 		// ImGui
 		{
 			ImGui_ImplOpenGL3_NewFrame();
-			ImGui_ImplSDL2_NewFrame(sdlWindow);
+			ImGui_ImplSDL2_NewFrame(renderer.sdlWindow);
 			ImGui::NewFrame();
 			
 			//ImGui::ShowDemoWindow(nullptr);
@@ -524,7 +526,7 @@ void main(){
 
 		}
 		// TODO: Should this be done in the Renderer?
-		SDL_GL_SwapWindow(sdlWindow);
+		renderer.endFrame();
 		return done;
 	}
 

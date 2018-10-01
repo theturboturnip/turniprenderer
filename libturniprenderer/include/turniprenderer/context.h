@@ -20,6 +20,7 @@
 namespace TurnipRenderer{
 	class Context {
 	public:
+		std::string name = "TurnipRenderer Demo";
 		ResourceManager<Mesh, Shader, Material, Texture> resources;
 		Scene scene;
 
@@ -37,24 +38,19 @@ namespace TurnipRenderer{
 		} cameraData;
 
 		struct RenderPassData {
-			union {
-				struct {
-					GLuint colorBuffer = 0;
-					GLuint dummy;
-				};
-				GLuint postProcessBuffers[2]; // Post Processing is done 0->1->0->1...
-			};
+			ResourceHandle<const ColorBuffer>& colorBuffer;
+			ResourceHandle<const ColorBuffer> postProcessBuffers[2]; // Post Processing is done 0->1->0->1...
 				
-			GLuint opaqueDepthBuffer = 0;
-			GLuint transparencyColorBucketBuffers[4] = {0, 0, 0, 0};
-			GLuint transparencyDepthBuffer = 0;
+			ResourceHandle<const DepthBuffer> opaqueDepthBuffer = nullptr;
+			ResourceHandle<const ColorBuffer> transparencyColorBucketBuffers[4] = {nullptr};
+			ResourceHandle<const DepthBuffer> transparencyDepthBuffer = nullptr;
 
-			GLuint opaqueFramebuffer = 0;
-			GLuint postProcessingFramebuffers[2] = {0, 0};
-			GLuint transparencyBucketingFramebuffer = 0;
+			ResourceHandle<const FrameBuffer> opaqueFramebuffer = nullptr;
+			ResourceHandle<const FrameBuffer> postProcessingFramebuffers[2] = {nullptr};
+			ResourceHandle<const FrameBuffer> transparencyBucketingFramebuffer = nullptr;
 
 			// This is to make clang happy, the union means it deletes the default constructor
-			RenderPassData() : colorBuffer(0), dummy(0) {}
+			RenderPassData() : colorBuffer(postProcessBuffers[0]) {}
 		} renderPassData;
 
 		Context(std::string name);
