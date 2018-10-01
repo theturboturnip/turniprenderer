@@ -12,6 +12,7 @@
 #include "input.h"
 #include "material.h"
 #include "texture.h"
+#include "renderer.h"
 
 #include "private/external/imgui.h"
 #include <SDL.h>
@@ -19,7 +20,6 @@
 namespace TurnipRenderer{
 	class Context {
 	public:
-		std::string name = "Context!";
 		ResourceManager<Mesh, Shader, Material, Texture> resources;
 		Scene scene;
 
@@ -78,6 +78,9 @@ namespace TurnipRenderer{
 		constexpr static size_t WIDTH = 1280;
 		constexpr static size_t HEIGHT = 720;
 
+		constexpr static size_t OPENGL_MAJOR = 3;
+		constexpr static size_t OPENGL_MINOR = 3;
+
 		struct Shadowmap {
 			GLuint colorBuffer;
 			GLuint depthBuffer;
@@ -85,14 +88,14 @@ namespace TurnipRenderer{
 		};
 		std::vector<Shadowmap> shadowmapsToUse;
 
-		void LogAvailableError();
+		//void LogAvailableError();
 		
 	private:
 
+		Renderer renderer;
+		
 		Input input;
 		
-		SDL_Window* sdlWindow = nullptr;
-		SDL_GLContext openGlContext;
 		ImGuiIO* io = nullptr;
 
 		Debug::DebugWindow debugWindow;
@@ -100,14 +103,11 @@ namespace TurnipRenderer{
 		DebugShaders debugShaders;
 		DefaultShaders defaultShaders;
 
-		ResourceHandle<Mesh> quad;
+		//ResourceHandle<Mesh> quad;
 		ResourceHandle<Shader> debugTransparentProgram;
 		ResourceHandle<Shader> postProcessPassthrough;
 		ResourceHandle<Shader> transparencyResolve;
 
 		void createFramebuffers();
-		void drawMesh(Mesh& mesh);
-		void drawQuad(Shader& shader, GLuint buffer);
-		void drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
 	};
 }

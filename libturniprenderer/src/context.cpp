@@ -14,57 +14,22 @@ namespace TurnipRenderer{
 		name(std::move(name)),
 		scene(*this),
 		assetManager(*this),
+		renderer(*this),
 		debugWindow(*this),
 		debugShaders(*this),
 		defaultShaders(*this)
 		{}
 	
 	void Context::initWindow(){
-		if (SDL_Init(SDL_INIT_VIDEO) != 0){
-			LogAvailableError();
-			return;
-		}
-    
-		SDL_GL_SetAttribute( SDL_GL_RED_SIZE, 8 );
-		SDL_GL_SetAttribute( SDL_GL_GREEN_SIZE, 8 );
-		SDL_GL_SetAttribute( SDL_GL_BLUE_SIZE, 8 );
-		SDL_GL_SetAttribute( SDL_GL_ALPHA_SIZE, 8 );
-    
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MAJOR_VERSION, 4 );
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_MINOR_VERSION, 6 );
-		SDL_GL_SetAttribute( SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
-
-		LogAvailableError();
-    
-		auto flags = SDL_WINDOW_OPENGL;// | SDL_WINDOW_RESIZABLE;
-		sdlWindow = SDL_CreateWindow(name.c_str(),
-									 SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED,
-									 WIDTH, HEIGHT,
-									 flags);
-		if (sdlWindow == nullptr){
-			LogAvailableError();
-			return;
-		}
-
-		openGlContext = SDL_GL_CreateContext(sdlWindow);
-		if (!openGlContext){
-			LogAvailableError();
-			return;
-		}
-    
-		int major, minor;
-		SDL_GL_GetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, &major);
-		SDL_GL_GetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, &minor);
-		fprintf(stderr, "Using OpenGL version %d.%d\n", major, minor);
-
-		SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-		SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 24);
-		SDL_GL_SetAttribute(SDL_GL_STENCIL_SIZE, 8);
-
-		LogAvailableError();
-
+		renderer.initialize(
+							name,
+							WIDTH,
+							HEIGHT,
+							OPENGL_MAJOR,
+							OPENGL_MINOR
+							);
+		
 		createFramebuffers();
-		LogAvailableError();
 
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
@@ -78,18 +43,7 @@ namespace TurnipRenderer{
 
 		scene.systems.push_back(std::make_unique<DirectionalLightRenderer>(*this));
 	}
-	Context::~Context(){
-		if (sdlWindow){
-			if (openGlContext){
-				ImGui_ImplOpenGL3_Shutdown();
-				ImGui::DestroyContext();
-				
-				SDL_GL_DeleteContext(openGlContext);
-			}
-			SDL_DestroyWindow(sdlWindow);
-			SDL_Quit();
-		}
-	}
+
 
 	void Context::createFramebuffers(){
 		auto createColorBuffer = [this](GLint internalFormat, GLenum format, GLenum type = GL_FLOAT) -> GLuint {
@@ -159,46 +113,7 @@ namespace TurnipRenderer{
 	}
 
 	void Context::initDemoScene(){
-		{
-			Mesh::MeshData quadData;
-			quadData.vertices.push_back(Mesh::Vertex{
-					glm::vec3(-1, -1, 0),
-						glm::vec3(0),
-						glm::vec3(0),
-						glm::vec2(0, 0)
-						});
-			quadData.vertices.push_back(Mesh::Vertex{
-					glm::vec3(1, -1, 0),
-						glm::vec3(0),
-						glm::vec3(0),
-						glm::vec2(1, 0)
-						});
-			quadData.vertices.push_back(Mesh::Vertex{
-					glm::vec3(-1, 1, 0),
-						glm::vec3(0),
-						glm::vec3(0),
-						glm::vec2(0, 1)
-						});
-			quadData.vertices.push_back(Mesh::Vertex{
-					glm::vec3(1, 1, 0),
-						glm::vec3(0),
-						glm::vec3(0),
-						glm::vec2(1, 1)
-						});
-
-			{
-				quadData.indices.push_back(0);
-				quadData.indices.push_back(1);
-				quadData.indices.push_back(2);
-			}
-			{
-				quadData.indices.push_back(1);
-				quadData.indices.push_back(2);
-				quadData.indices.push_back(3);
-			}
-
-			quad = resources.addResource(Mesh(std::move(quadData)));
-		}
+		
 		
 		/*ResourceHandle<Mesh> planeMesh;
 		{
@@ -362,9 +277,6 @@ void main(){
 	}
 
 	bool Context::renderFrame(){
-		LogAvailableError();
-		//fprintf(stderr, "Starting frame\n");
-		
 		bool done = false;
 		input.onFrameStart();
 		SDL_Event event;
@@ -611,30 +523,12 @@ void main(){
 			//fprintf(stderr, "Finished the ImGui pass\n");
 
 		}
+		// TODO: Should this be done in the Renderer?
 		SDL_GL_SwapWindow(sdlWindow);
 		return done;
 	}
 
-	void Context::drawQuad(Shader& shader, GLuint buffer){
-		drawQuadAdvanced(shader, [buffer](){
-				// Bind the current postprocessing buffer to tex0
-				glActiveTexture(GL_TEXTURE0);
-				glBindTexture(GL_TEXTURE_2D, buffer);
-				glUniform1i(0, 0); // Bind uniform 0 to texture 0
-			});
-	}
-	void Context::drawQuadAdvanced(Shader& shader, std::function<void()> bindTextures){
-		glUseProgram(shader.programId);
-		bindTextures();
-		drawMesh(*quad);
-	}
-	void Context::drawMesh(Mesh& mesh){
-		glBindVertexArray(mesh.getVAO());
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.getIBO());
-		glDrawElements(GL_TRIANGLES, mesh.indices().size(), GL_UNSIGNED_INT, 0);
-	}
-
-	void Context::LogAvailableError(){
+	/*void Context::LogAvailableError(){
 		const char* sdlError = SDL_GetError();
 		if (*sdlError != '\0')
 			fprintf(stderr, "SDL Error: %s\n", sdlError);
@@ -643,5 +537,5 @@ void main(){
 			fprintf(stderr, "OpenGL Error: %d\n", glError);
 			assert(false);
 		}
-	}
+	}*/
 };
