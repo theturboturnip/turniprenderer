@@ -231,8 +231,23 @@ namespace TurnipRenderer {
 			errorMsg << "OpenGL Error: ";
 			const char* customMsg = nullptr;
 			switch(glError){
-			case 1282:
-				errorMsg << 1282;
+			case 0x0500:
+				errorMsg << "GL_INVALID_ENUM";
+				break;
+			case 0x0501:
+				errorMsg << "GL_INVALID_VALUE";
+				break;
+			case 0x0502:
+				errorMsg << "GL_INVALID_OPERATION";
+				break;
+			case 0x0503:
+				errorMsg << "GL_STACK_OVERFLOW";
+				break;
+			case 0x0504:
+				errorMsg << "GL_STACK_UNDERFLOW";
+				break;
+			case 0x0505:
+				errorMsg << "GL_OUT_OF_MEMORY";
 				break;
 			default:
 				errorMsg << (int)glError;
