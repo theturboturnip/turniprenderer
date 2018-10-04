@@ -194,7 +194,7 @@ namespace TurnipRenderer {
 		glBindFramebuffer(GL_FRAMEBUFFER, frameBuffer);
 
 		assert(colorBuffersCount <= 8);
-		std::vector<GLenum> drawBuffers(colorBuffersCount);
+		std::vector<GLenum> drawBuffers;
 		for (auto i = 0u; i < colorBuffersCount; i++){
 			glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, *colorBuffers[i], 0);
 			drawBuffers.push_back(GL_COLOR_ATTACHMENT0 + i);
