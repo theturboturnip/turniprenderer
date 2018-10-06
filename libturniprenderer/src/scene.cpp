@@ -29,15 +29,18 @@ namespace TurnipRenderer {
 		}
 
 		auto glmFromAssimpVec2 = [](auto vec) -> glm::vec2 {
-			return glm::vec2(vec.x, vec.y);
+			return glm::vec2(vec[0], vec[1]);
 		};
-		auto glmFromAssimpVec3 = [](aiVector3D vec) -> glm::vec3 {
-			return glm::vec3(vec.x, vec.y, vec.z);
+		auto glmFromAssimpVec3 = [](auto vec) -> glm::vec3 {
+			return glm::vec3(vec[0], vec[1], vec[2]);
+		};
+		auto glmFromAssimpVec4 = [](auto vec) -> glm::vec4 {
+			return glm::vec4(vec[0], vec[1], vec[2], vec[3]);
 		};
 
 		std::vector<ResourceHandle<Mesh>> meshes(importedScene->mNumMeshes);
 		{
-			auto createMeshFromAssimp = [this, glmFromAssimpVec2, glmFromAssimpVec3](aiMesh* mesh) -> ResourceHandle<Mesh> {
+			auto createMeshFromAssimp = [&](aiMesh* mesh) -> ResourceHandle<Mesh> {
 				Mesh::MeshData meshData;
 				
 				// Vertices
@@ -70,7 +73,16 @@ namespace TurnipRenderer {
 
 		std::vector<ResourceHandle<Material>> materials(importedScene->mNumMaterials);
 		{
-			auto createMaterialFromAssimp = [this, glmFromAssimpVec2, glmFromAssimpVec3, &scenePath](aiMaterial* material) -> ResourceHandle<Material> {
+			auto createMaterialFromAssimp = [&](aiMaterial* material) -> ResourceHandle<Material> {
+
+				Material::TransparencyMode transparencyMode = Material::TransparencyMode::Opaque;
+				float assimpOpacity;
+				material->Get(AI_MATKEY_OPACITY, assimpOpacity);
+				// TODO: Do something to check if the matkey is present
+				if (assimpOpacity < 1.0f && assimpOpacity != 0.0f){ // 0.0f is used as a null value
+					transparencyMode = Material::TransparencyMode::Translucent;
+					fprintf(stdout, "Opacity was %f, => material is translucent\n", assimpOpacity);
+				}
 				
 				ResourceHandle<Texture> texture;
 				if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0){
@@ -82,10 +94,30 @@ namespace TurnipRenderer {
 					if (*path.C_Str() != '*'){
 						texture = context.assetManager.loadAsset<Texture>(actualPath);
 					}
-
 				}
+
+				glm::vec4 color;
+				switch(transparencyMode){
+				case Material::TransparencyMode::Translucent:
+				{
+					aiColor4D assimpColor;
+					material->Get(AI_MATKEY_COLOR_TRANSPARENT, assimpColor);
+					color = glmFromAssimpVec4(assimpColor);
+					color.a = assimpOpacity;
+					break;
+				}
+				default:
+				{
+					aiColor4D assimpColor;
+					material->Get(AI_MATKEY_COLOR_DIFFUSE, assimpColor);
+					color = glmFromAssimpVec4(assimpColor);
+				}
+				}
+
 				return context.resources.addResource(Material{
-						texture
+						texture,
+							transparencyMode,
+							color
 					});
 			};
 			fprintf(stdout, "Material Report:\n");

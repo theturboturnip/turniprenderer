@@ -53,8 +53,13 @@ namespace TurnipRenderer {
 		ResourceHandle<Mesh> mesh;
 		ResourceHandle<Material> material;
 		ResourceHandle<Shader> shader;
-		bool isOpaque = true;
-		glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
+
+		inline bool renderable() const {
+			return mesh.isValid() && material.isValid();
+		}
+		
+		//bool isOpaque = true;
+		//glm::vec4 transparencyColor = glm::vec4(1, 0.5f, 0.5f, 0.5f);
 		
 		Transform transform;
 	private:

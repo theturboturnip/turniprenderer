@@ -46,7 +46,7 @@ namespace TurnipRenderer {
 		Bounds objectBounds;
 		// TODO: Does transforming each one individually make the frustum smaller?
 		for (Entity* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
-			if (entity->isOpaque && entity->mesh) objectBounds.encapsulate( entity->transform.transformWorldSpaceFromModelSpace() * entity->mesh->getBounds());
+			if (entity->renderable()) objectBounds.encapsulate( entity->transform.transformWorldSpaceFromModelSpace() * entity->mesh->getBounds());
 		}
 		objectBounds = glm::inverse(lightRotation) * objectBounds;
 		glm::vec3 extents = objectBounds.getExtents();
@@ -67,7 +67,7 @@ namespace TurnipRenderer {
 		context.renderer.setOperation("DirLight Shadowmap Opaque Rendering");
 		glUseProgram(context.getDefaultShaders().depthOnlyShader->programId);
 		for (auto* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
-			if (entity->mesh && entity->isOpaque){
+			if (entity->renderable() && entity->material->isOpaque()){
 				glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 				glUniformMatrix4fv(0, 1, GL_FALSE,
 								   reinterpret_cast<const GLfloat*>(&MVP));
@@ -87,11 +87,11 @@ namespace TurnipRenderer {
 
 		glUseProgram(context.getDefaultShaders().transparentColorShader->programId);
 		for (auto* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
-			if (entity->mesh && !entity->isOpaque){
+			if (entity->renderable() && entity->material->isTranslucent()){
 				glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 				glUniformMatrix4fv(0, 1, GL_FALSE,
 								   reinterpret_cast<const GLfloat*>(&MVP));
-				glUniform4fv(1, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
+				glUniform4fv(1, 1, reinterpret_cast<const GLfloat*>(&entity->material->color));
 
 				context.renderer.drawMesh(*entity->mesh);
 			}

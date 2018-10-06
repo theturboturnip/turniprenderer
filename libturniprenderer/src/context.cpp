@@ -77,7 +77,7 @@ namespace TurnipRenderer{
 	}
 
 	void Context::initDemoScene(){
-		scene.addModel("assets/sponza/sponza.fbx");
+		scene.addModel("assets/sponza/sponza_demo.fbx");
 
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
@@ -249,7 +249,7 @@ void main(){
 
 			glUseProgram(defaultShaders.depthOnlyShader->programId);
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh && entity->isOpaque){
+				if (entity->renderable() && entity->material->isOpaque()){
 					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
@@ -273,7 +273,7 @@ void main(){
 			glClear(GL_COLOR_BUFFER_BIT);
 
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh && entity->isOpaque){
+				if (entity->renderable() && entity->material->isOpaque()){
 					if (entity->shader && entity->material && entity->material->texture){
 						glUseProgram(entity->shader->programId);
 						renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->textureId);
@@ -324,11 +324,11 @@ void main(){
 			glUniform1f(2, cameraData.depthMax);
 
 			for (auto* entity : scene.heirarchy){
-				if (entity->mesh && !entity->isOpaque){
+				if (entity->renderable() && entity->material->isTranslucent()){
 					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
-					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->transparencyColor));
+					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->material->color));
 					renderer.drawMesh(*entity->mesh);
 				}
 			}

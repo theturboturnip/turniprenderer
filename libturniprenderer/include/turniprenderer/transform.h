@@ -7,7 +7,7 @@ namespace TurnipRenderer {
 	public:
 		Transform(Entity& entity, glm::vec3 lp, glm::quat lr, glm::vec3 ls)
 			// TODO: Proper euler angle init
-			: Transform(entity, lp, quatToEuler(lr), ls){}
+			: Transform(entity, lp, glm::degrees(quatToEuler(lr)), ls){} // The other constructor takes degrees for rotation
 		Transform(Entity& entity, glm::vec3 lp, glm::vec3 lead, glm::vec3 ls)
 			: entity(entity), m_localPosition(lp), m_localEulerAngles(glm::radians(lead)), m_localScale(ls) {
 			updateQuatFromEulerAngles();
