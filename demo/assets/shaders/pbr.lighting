@@ -30,7 +30,7 @@ PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 }
 
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
-	return fragment.albedo *
-		vec4(light.color, 1) *
-		dot(fragment.normal_worldSpace, -light.direction_worldSpace);
+	vec3 totalLight = light.color * dot(fragment.normal_worldSpace, -light.direction_worldSpace);
+	totalLight += vec3(0.5);
+	return fragment.albedo * vec4(totalLight, 1);
 }

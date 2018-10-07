@@ -10,7 +10,7 @@
 
 namespace TurnipRenderer {
 	namespace ShaderConstants {
-		extern std::string versionExtensionPrefix;
+		extern const char *const versionExtensionPrefix;
 	};
 	
 	class ShaderBase {
@@ -38,11 +38,11 @@ namespace TurnipRenderer {
 	public:
 		UnlitShader(std::string vertexSrc, std::string fragmentSrc){
 			ShaderBase::ShaderSource vertexShaders[] = {
-				ShaderConstants::versionExtensionPrefix.c_str(),
+				ShaderConstants::versionExtensionPrefix,
 				vertexSrc.c_str()
 			};
 			ShaderBase::ShaderSource fragmentShaders[] = {
-				ShaderConstants::versionExtensionPrefix.c_str(),
+				ShaderConstants::versionExtensionPrefix,
 				fragmentSrc.c_str()
 			};
 			compileShaders(vertexShaders, 2, fragmentShaders, 2);
@@ -52,7 +52,7 @@ namespace TurnipRenderer {
 	public:
 		Shader(const std::string& lightingCode){
 			ShaderBase::ShaderSource vertexShaders[] = {
-				ShaderConstants::versionExtensionPrefix.c_str(),
+				ShaderConstants::versionExtensionPrefix,
 				lightingVertexDefines,
 				lightingCommonCode,
 				lightingCode.c_str(),
@@ -60,7 +60,7 @@ namespace TurnipRenderer {
 				lightingVertexCode
 			};
 			ShaderBase::ShaderSource fragmentShaders[] = {
-				ShaderConstants::versionExtensionPrefix.c_str(),
+				ShaderConstants::versionExtensionPrefix,
 				lightingFragmentDefines,
 				lightingCommonCode,
 				lightingCode.c_str(),
