@@ -21,7 +21,7 @@ namespace TurnipRenderer{
 	class Context {
 	public:
 		std::string name = "TurnipRenderer Demo";
-		ResourceManager<Mesh, Shader, Material, Texture> resources;
+		ResourceManager<Mesh, UnlitShader, Shader, Material, Texture> resources;
 		Scene scene;
 
 		struct CameraData {
@@ -57,6 +57,8 @@ namespace TurnipRenderer{
 		bool renderFrame();
 		void initDemoScene();
 		void initWindow();
+
+		void setLightingShaderPath(std::string filePath);
 
 		inline const Input& getInput() const {
 			return input;
@@ -98,9 +100,9 @@ namespace TurnipRenderer{
 		DebugShaders debugShaders;
 		DefaultShaders defaultShaders;
 
-		ResourceHandle<Shader> debugTransparentProgram;
-		ResourceHandle<Shader> postProcessPassthrough;
-		ResourceHandle<Shader> transparencyResolve;
+		ResourceHandle<UnlitShader> debugTransparentProgram;
+		ResourceHandle<UnlitShader> postProcessPassthrough;
+		ResourceHandle<UnlitShader> transparencyResolve;
 
 		void createFramebuffers();
 	};

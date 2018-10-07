@@ -70,6 +70,9 @@ namespace TurnipRenderer {
 			return ResourceHandle<const T>(container);
 		}
 
+		T* resourcePointer() const {
+			return (T*)(*this);
+		}
         T* operator->() const {
 			return (T*)(*this);
         }

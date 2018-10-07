@@ -120,15 +120,15 @@ namespace TurnipRenderer {
 		checkErrors("bindTextureToSlot");
 	}
 
-	void Renderer::drawFullscreenQuad(Shader& shader, const ResourceHandle<const ColorBuffer>& buffer){
+	void Renderer::drawFullscreenQuad(ShaderBase* shader, const ResourceHandle<const ColorBuffer>& buffer){
 		drawFullscreenQuadAdvanced(shader, [this, buffer](){
 				// Bind the current postprocessing buffer to tex0
 				bindTextureToSlot(GL_TEXTURE0, buffer);
 				glUniform1i(0, 0); // Bind uniform 0 to texture 0
 			});
 	}
-	void Renderer::drawFullscreenQuadAdvanced(Shader& shader, std::function<void()> bindTextures){
-		glUseProgram(shader.programId);
+	void Renderer::drawFullscreenQuadAdvanced(ShaderBase* shader, std::function<void()> bindTextures){
+		glUseProgram(shader->programId);
 		checkErrors("drawFullscreenQuadAdvanced - Shader Bind");
 		bindTextures();
 		drawMesh(*fullscreenQuad);
@@ -263,6 +263,7 @@ namespace TurnipRenderer {
 		if (possibleErrorContext)
 			errorMsg << "Internal Error Context: " << possibleErrorContext << '\n';
 
+		//fprintf(stderr, "%s", errorMsg.str().c_str());
 		throw std::runtime_error(errorMsg.str());
 	}
 };

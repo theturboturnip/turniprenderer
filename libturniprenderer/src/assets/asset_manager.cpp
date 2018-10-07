@@ -15,7 +15,7 @@ namespace TurnipRenderer {
 	std::string AssetManager::pathRelativeToDirectory(std::string directory, std::string relativePath){
 		return directoryName(directory) + '/' + relativePath;
 	}
-	
+
 	std::vector<unsigned char> AssetManager::readAsset(std::string path){
 		std::ifstream in(path, std::ios::in | std::ios::binary);
 		in.unsetf(std::ios::skipws);
@@ -47,5 +47,7 @@ namespace TurnipRenderer {
 		if (existingAsset) return existingAsset;
 		return context.resources.addNamedResource(T(readAsset(path1), readAsset(path2)), id);
 	}
-	template ResourceHandle<Shader> AssetManager::loadAsset<Shader>(std::string, std::string);
+	// Shaders have changed
+	// TODO: Reconsider whether Shaders should be loaded from here at all
+	//template ResourceHandle<Shader> AssetManager::loadAsset<Shader>(std::string, std::string);
 }

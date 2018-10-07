@@ -124,8 +124,8 @@ namespace TurnipRenderer {
 		// TODO: Pipelines. Have a Pipeline object which can be used to apply shader-agnostic state all at once, do diffs if you want.
 		
 		void drawMesh(Mesh& mesh);
-		void drawFullscreenQuad(Shader& shader, const ResourceHandle<const ColorBuffer>& buffer);
-		void drawFullscreenQuadAdvanced(Shader& shader, std::function<void()> bindTextures);
+		void drawFullscreenQuad(ShaderBase* shader, const ResourceHandle<const ColorBuffer>& buffer);
+		void drawFullscreenQuadAdvanced(ShaderBase* shader, std::function<void()> bindTextures);
 
 		ResourceHandle<const ColorBuffer> createColorBuffer(TextureConfig);
 		ResourceHandle<const DepthBuffer> createDepthBuffer(TextureConfig);

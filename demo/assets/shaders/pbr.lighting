@@ -1,0 +1,36 @@
+#define LightingName PBR
+
+struct PBRVertex {
+	mat3 vTBN;
+	vec3 viewDirection_worldSpace;
+};
+PBRVertex PBRFillVertex(vec3 viewDirection, vec3 normal, vec3 tangent){
+	PBRVertex vertex;
+	vertex.vTBN = mat3(tangent, cross(normal, tangent), normal);
+	vertex.viewDirection_worldSpace = viewDirection;
+	return vertex;
+}
+
+struct PBRFragment {
+	vec4 albedo;
+	float roughness;
+	float metallic;
+	
+	vec3 normal_worldSpace;
+};
+TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
+PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
+	PBRFragment fragment;
+	fragment.albedo = TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0);
+	fragment.roughness = 0.5f;
+	fragment.metallic = 0.0f;
+
+	fragment.normal_worldSpace = vertex.vTBN[2];
+	return fragment;
+}
+
+vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
+	return fragment.albedo *
+		vec4(light.color, 1) *
+		dot(fragment.normal_worldSpace, -light.direction_worldSpace);
+}

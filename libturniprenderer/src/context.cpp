@@ -86,7 +86,7 @@ namespace TurnipRenderer{
 		cameraData.depthMax = 500.f;
 		cameraData.updateProjectionMatrix();
 
-		debugTransparentProgram = resources.addResource(Shader(R"(
+		debugTransparentProgram = resources.addResource(UnlitShader(R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -136,7 +136,7 @@ void main(){
     OUT.uv0 = uv0;
 }
 )";
-		postProcessPassthrough = resources.addResource(Shader(passthroughVertexShader,
+		postProcessPassthrough = resources.addResource(UnlitShader(passthroughVertexShader,
 															  R"(
 layout(location = 0) uniform sampler2D tex;
 
@@ -151,7 +151,7 @@ color = vec4(texture(tex, IN.uv0));
 }
 )"));
 
-		transparencyResolve = resources.addResource(Shader(passthroughVertexShader,
+		transparencyResolve = resources.addResource(UnlitShader(passthroughVertexShader,
 															  R"(
 layout(location = 0) uniform sampler2D bucket0;
 layout(location = 1) uniform sampler2D bucket1;
@@ -174,6 +174,13 @@ void main(){
     }
 }
 )"));
+	}
+
+	void Context::setLightingShaderPath(std::string filePath){
+		// TODO: This is bad. we should read the asset directly as a string
+		// and let C++ do some char conversions if necessary (ex. newlines)
+		std::vector<unsigned char> fileData = assetManager.readAsset(filePath);
+		defaultShaders.setLightingCode(std::string(reinterpret_cast<char*>(fileData.data())));
 	}
 
 	void Context::CameraData::updateProjectionMatrix(){
@@ -344,7 +351,7 @@ void main(){
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(GL_FALSE);
 
-			renderer.drawFullscreenQuadAdvanced(*transparencyResolve, [this]() {
+			renderer.drawFullscreenQuadAdvanced(transparencyResolve.resourcePointer(), [this]() {
 					renderer.bindTextureToSlot(GL_TEXTURE0, renderPassData.transparencyColorBucketBuffers[0]);
 					glUniform1i(0, 0); // Bind uniform 0 to texture 0
 					
@@ -374,7 +381,7 @@ void main(){
 			glDisable(GL_DEPTH_TEST);
 			glDepthMask(GL_FALSE);
 
-			renderer.drawFullscreenQuad(*postProcessPassthrough, renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
+			renderer.drawFullscreenQuad(postProcessPassthrough.resourcePointer(), renderPassData.postProcessBuffers[currentPostprocessingBuffer]);
 		}
 
 		// ImGui
