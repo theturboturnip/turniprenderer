@@ -53,7 +53,7 @@ void main(){
 #define TURNIP_TEXTURE_NAME(NAME) TURNIP_CONCAT(NAME, _texture)
 
 struct TurnipLight {
-	vec3 color;
+	vec3 radiance;
 	vec3 direction_worldSpace; // Incoming Direction
 };
 )";
@@ -126,7 +126,7 @@ void main(){
         vec3 lightSpaceCoord = IN.shadowmapPos.xyz / IN.shadowmapPos.w;
         lightSpaceCoord = lightSpaceCoord * 0.5 + 0.5; // Transform to 0-1
         lightSpaceCoord.z -= 0.005; // Bias
-        dirLight.color = texture(shadowmapColor, lightSpaceCoord.xy).rgb * texture(shadowmapDepth, lightSpaceCoord);
+        dirLight.radiance = texture(shadowmapColor, lightSpaceCoord.xy).rgb * texture(shadowmapDepth, lightSpaceCoord);
     }
     dirLight.direction_worldSpace = IN.lightingDirection;
 
@@ -175,17 +175,7 @@ void main(){}
 			glShaderSource(id, sourceCount, sources, nullptr);
 			glCompileShader(id);
 
-			GLint compileResult = GL_FALSE;
-			int messageLength;
-			glGetShaderiv(id, GL_COMPILE_STATUS, &compileResult);
-			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &messageLength);
-			if (messageLength > 0){
-				std::vector<char> message(messageLength + 1);
-				glGetShaderInfoLog(id, messageLength, nullptr, message.data());
-				
-				if (compileResult == GL_FALSE) throw std::runtime_error(message.data());
-				else fprintf(stdout, "Shader Compilation Info: %s\n", message.data());
-			}
+			// Compilation errors will be reported when we try to link
 		};
 		compileShader(vertexId, GL_VERTEX_SHADER, vertexSources, vertexSourceCount);
 		compileShader(fragmentId, GL_FRAGMENT_SHADER, fragmentSources, fragmentSourceCount);

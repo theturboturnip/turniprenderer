@@ -29,6 +29,9 @@ PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 	return fragment;
 }
 
+float PBRLightingDot(vec3 one, vec3 two){
+	return max(0.0, dot(one, two));
+}
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	vec3 totalLight = light.color * dot(fragment.normal_worldSpace, -light.direction_worldSpace);
 	totalLight += vec3(0.5);

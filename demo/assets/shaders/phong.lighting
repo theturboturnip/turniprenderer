@@ -1,0 +1,28 @@
+#define LightingName Phong
+
+struct PhongVertex {
+	vec3 normal_worldSpace;
+	vec3 viewDirection_worldSpace;
+};
+PhongVertex PhongFillVertex(vec3 viewDirection, vec3 normal, vec3 tangent){
+	PhongVertex vertex;
+	vertex.normal_worldSpace = normal;
+	vertex.viewDirection_worldSpace = viewDirection;
+	return vertex;
+}
+
+struct PhongFragment {
+	vec3 albedo;
+};
+TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
+PhongFragment PhongFillFragment(PhongVertex vertex, vec2 uv0){
+	PhongFragment fragment;
+	fragment.albedo = TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0).rgb;
+	return fragment;
+}
+
+vec4 PhongLighting(PhongVertex vertex, PhongFragment fragment, TurnipLight light){
+	vec3 totalLight = light.color * max(0, dot(vertex.normal_worldSpace, -light.direction_worldSpace));
+	totalLight += vec3(0.5);
+	return fragment.albedo * vec4(totalLight, 1);
+}
