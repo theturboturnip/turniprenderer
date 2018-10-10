@@ -1,5 +1,8 @@
 #define LightingName PBR
 
+// TODO: Define in the including code
+#define PI 3.14158265359
+
 struct PBRVertex {
 	mat3 vTBN;
 	vec3 viewDirection_worldSpace;
@@ -17,7 +20,7 @@ struct PBRFragment {
 	float metallic;
 	
 	vec3 normal_worldSpace;
-};
+}
 TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
 PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 	PBRFragment fragment;
@@ -32,8 +35,60 @@ PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 float PBRLightingDot(vec3 one, vec3 two){
 	return max(0.0, dot(one, two));
 }
+float PBRTrowbridgeReitzGGX(float NdotH, float roughness){
+	float roughness2 = roughness * roughness;
+	float NdotH2 = NdotH * NdotH;
+
+	float nom = roughness2;
+	float denom = (NdotH2 * (roughness2 - 1.0) + 1.0);
+	denom = PI * denom * denom;
+
+	return nom/denom;
+}
+float PBRSchlickGGX(float NdotVec, float k){
+	float nom = NdotVec;
+	float denom = NdotVec * (1 - k) + k;
+
+	return nom/denom;
+}
+float PBRSmithTotalGeometryGGX(float NdotV, float NdotL, float k){
+	return PBRSchlickGGX(NdotV, k) * PBRSchlickGGX(NdotL, k);
+}
+float PBRKFromDirect(float roughness){
+	return (roughness + 1) * (roughness + 1) / 8.0;
+}
+float PBRKFromIBL(float roughness){
+	return (roughness * roughness) / 2.0;
+}
+vec3 PBRSchlickFresnel(float NdotV, vec3 fresnelColor){
+	return mix(fresnelColor, vec3(0), pow(1.0 - NdotV, 5));
+}
+vec3 PBRFresnelColor(vec3 albedo, float metallic){
+	return mix(vec3(0.04), albedo, metallic);
+}
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
-	vec3 totalLight = light.color * dot(fragment.normal_worldSpace, -light.direction_worldSpace);
-	totalLight += vec3(0.5);
-	return fragment.albedo * vec4(totalLight, 1);
+	vec3 L = light.direction_worldSpace;
+	vec3 V = -vertex.viewDirection_worldSpace;
+	vec3 N = fragment.normal_worldSpace;
+	vec3 H = normalize(V+L);
+
+	float NdotH = PBRLightingDot(N, H);
+	float NdotV = PBRLightingDot(N, V);
+	float NdotL = PBRLightingDot(N, L);
+
+	vec3 brdfF = PBRSchlickFresnel(NdotV, PBRFresnelColor(fragment.albedo.rgb, fragment.metallic));
+	float brdfNDF = PBRTrowbridgeReitzGGX(NdotH, fragment.roughness);
+	float brdfG = PBRSmithTotalGeometryGGX(NdotV, NdotL,
+										   PBRKFromDirect(fragment.roughness));
+	vec3 specularFraction = brdfF;
+	vec3 specularNumerator = vec3(brdfNDF * brdfG); // Miss out F because it is the specularFraction
+	vec3 specularDenominator = vec3(4 * NdotV * NdotL);
+	vec3 specularColor = specularNumerator / max(specularDenominator, 0.0001);
+	
+	vec3 diffuseFraction = (1 - specularFraction) * (1 - fragment.metallic);
+	vec3 diffuseColor = fragment.albedo.rgb / PI;
+
+	vec3 finalColor = (diffuseColor * diffuseFraction + specularFraction * specularColor) * light.radiance * NdotL;
+	
+	return vec4(finalColor, fragment.albedo.a);
 }

@@ -48,6 +48,7 @@ void main(){
 	}
 
 	const char *const Shader::lightingCommonCode = R"(
+#line 1000
 #define TURNIP_CONCAT_IMPL(A, B) A ## B
 #define TURNIP_CONCAT(A, B) TURNIP_CONCAT_IMPL(A, B)
 #define TURNIP_TEXTURE_NAME(NAME) TURNIP_CONCAT(NAME, _texture)
@@ -56,8 +57,10 @@ struct TurnipLight {
 	vec3 radiance;
 	vec3 direction_worldSpace; // Incoming Direction
 };
+#line 0
 )";
 	const char *const Shader::lightingAdaptorCode = R"(
+#line 2000
 #ifndef LightingName
 #error "LightingName was not defined by the lighting shader!"
 #endif
@@ -69,10 +72,12 @@ struct TurnipLight {
 #define TURNIP_LIGHTING_FUNC TURNIP_CONCAT(LightingName, Lighting)
 )";
 	const char *const Shader::lightingVertexDefines = R"(
+#line 3000
 #define TURNIP_FRAGMENT_TEXTURE(A, B)
 #define TURNIP_FRAGMENT_SAMPLE(A, B) vec4(0)
 )";
 	const char *const Shader::lightingVertexCode = R"(
+#line 4000
 #ifndef TURNIP_LIGHTING_VDATA
 #error "Something went wrong"
 #endif
@@ -103,11 +108,13 @@ void main(){
 )";
 
 	const char *const Shader::lightingFragmentDefines = R"(
+#line 5000
 #define TURNIP_FRAGMENT_TEXTURE(A, B) layout(location = 16 + A) \
                                       uniform sampler2D TURNIP_TEXTURE_NAME(B);
 #define TURNIP_FRAGMENT_SAMPLE(TEXTURE_NAME, UV) texture(TURNIP_TEXTURE_NAME(TEXTURE_NAME), UV)
 )";
 	const char *const Shader::lightingFragmentCode = R"(
+#line 6000
 layout(location = 0) in struct {
     vec2 uv0;
     vec4 shadowmapPos;
@@ -137,7 +144,7 @@ void main(){
 	
 	void DefaultShaders::createShaders(){
 		phongOpaqueShader = context.resources.addResource(Shader(lightingCode));
-		
+		fprintf(stdout, "Finished compiling PBR shader\n");
 		std::string mvpVertexShader = R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
@@ -175,7 +182,17 @@ void main(){}
 			glShaderSource(id, sourceCount, sources, nullptr);
 			glCompileShader(id);
 
-			// Compilation errors will be reported when we try to link
+			GLint compileResult = GL_FALSE;
+			int messageLength;
+			glGetShaderiv(id, GL_COMPILE_STATUS, &compileResult);
+			glGetShaderiv(id, GL_INFO_LOG_LENGTH, &messageLength);
+			if (messageLength > 0){
+				std::vector<char> message(messageLength + 1);
+				glGetShaderInfoLog(id, messageLength, nullptr, message.data());
+				
+				if (compileResult == GL_FALSE) throw std::runtime_error(message.data());
+				else fprintf(stdout, "Shader Compilation Info: %s\n", message.data());
+			}
 		};
 		compileShader(vertexId, GL_VERTEX_SHADER, vertexSources, vertexSourceCount);
 		compileShader(fragmentId, GL_FRAGMENT_SHADER, fragmentSources, fragmentSourceCount);
