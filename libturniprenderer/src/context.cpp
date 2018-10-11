@@ -240,6 +240,7 @@ void main(){
 		
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
+		glm::vec3 cameraPos = scene.camera->transform.worldPosition();
 
 		// Depth Pass
 		{
@@ -305,7 +306,9 @@ void main(){
 						glUniformMatrix4fv(1, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&M));
 						glUniformMatrix4fv(2, 1, GL_FALSE,
-									   reinterpret_cast<const GLfloat*>(&lightMVP));
+										   reinterpret_cast<const GLfloat*>(&lightMVP));
+						glUniform3fv(5, 1,
+									 reinterpret_cast<const GLfloat*>(&cameraPos));
 					}
 
 					renderer.drawMesh(*entity->mesh);

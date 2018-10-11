@@ -20,12 +20,12 @@ struct PBRFragment {
 	float metallic;
 	
 	vec3 normal_worldSpace;
-}
+};
 TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
 PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 	PBRFragment fragment;
 	fragment.albedo = TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0);
-	fragment.roughness = 0.5f;
+	fragment.roughness = 1.0f;
 	fragment.metallic = 0.0f;
 
 	fragment.normal_worldSpace = vertex.vTBN[2];
@@ -67,28 +67,38 @@ vec3 PBRFresnelColor(vec3 albedo, float metallic){
 	return mix(vec3(0.04), albedo, metallic);
 }
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
-	vec3 L = light.direction_worldSpace;
-	vec3 V = -vertex.viewDirection_worldSpace;
-	vec3 N = fragment.normal_worldSpace;
+	vec3 L = -normalize(light.direction_worldSpace);
+	vec3 V = normalize(vertex.viewDirection_worldSpace);
+	vec3 N = normalize(fragment.normal_worldSpace);
 	vec3 H = normalize(V+L);
 
 	float NdotH = PBRLightingDot(N, H);
 	float NdotV = PBRLightingDot(N, V);
 	float NdotL = PBRLightingDot(N, L);
+	float HdotV = PBRLightingDot(H, V);
+	//return vec4(0, NdotV, 0, 0);
 
-	vec3 brdfF = PBRSchlickFresnel(NdotV, PBRFresnelColor(fragment.albedo.rgb, fragment.metallic));
+	vec3 brdfF = PBRSchlickFresnel(HdotV, PBRFresnelColor(fragment.albedo.rgb, fragment.metallic));
 	float brdfNDF = PBRTrowbridgeReitzGGX(NdotH, fragment.roughness);
 	float brdfG = PBRSmithTotalGeometryGGX(NdotV, NdotL,
 										   PBRKFromDirect(fragment.roughness));
 	vec3 specularFraction = brdfF;
+	//return vec4(specularFraction, 0);
 	vec3 specularNumerator = vec3(brdfNDF * brdfG); // Miss out F because it is the specularFraction
+	//return vec4(specularNumerator, 0);
 	vec3 specularDenominator = vec3(4 * NdotV * NdotL);
 	vec3 specularColor = specularNumerator / max(specularDenominator, 0.0001);
+	//return vec4(specularColor, 0);
+	//return vec4(specularColor * specularFraction, 0);
 	
 	vec3 diffuseFraction = (1 - specularFraction) * (1 - fragment.metallic);
 	vec3 diffuseColor = fragment.albedo.rgb / PI;
 
 	vec3 finalColor = (diffuseColor * diffuseFraction + specularFraction * specularColor) * light.radiance * NdotL;
+
+	// Correction
+	//finalColor = finalColor / (finalColor + vec3(1.0));
+	//finalColor = pow(finalColor, vec3(1.0/2.2));
 	
 	return vec4(finalColor, fragment.albedo.a);
 }

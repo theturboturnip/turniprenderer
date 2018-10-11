@@ -23,6 +23,10 @@ namespace TurnipRenderer {
 			invalidateLocal();
 			m_localPosition = newLocalPosition;
 		}
+		inline glm::vec3 worldPosition() const {
+			updateMatricesIfNecessary();
+			return cachedTransformWorldSpaceFromModelSpace * glm::vec4(0, 0, 0, 1);
+		}
 		inline glm::quat localRotation() const {
 			return m_localRotation;
 		}

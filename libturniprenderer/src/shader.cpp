@@ -48,7 +48,7 @@ void main(){
 	}
 
 	const char *const Shader::lightingCommonCode = R"(
-#line 1000
+#line 1000 0
 #define TURNIP_CONCAT_IMPL(A, B) A ## B
 #define TURNIP_CONCAT(A, B) TURNIP_CONCAT_IMPL(A, B)
 #define TURNIP_TEXTURE_NAME(NAME) TURNIP_CONCAT(NAME, _texture)
@@ -57,10 +57,10 @@ struct TurnipLight {
 	vec3 radiance;
 	vec3 direction_worldSpace; // Incoming Direction
 };
-#line 0
+#line 0 0
 )";
 	const char *const Shader::lightingAdaptorCode = R"(
-#line 2000
+#line 2000 0
 #ifndef LightingName
 #error "LightingName was not defined by the lighting shader!"
 #endif
@@ -72,12 +72,12 @@ struct TurnipLight {
 #define TURNIP_LIGHTING_FUNC TURNIP_CONCAT(LightingName, Lighting)
 )";
 	const char *const Shader::lightingVertexDefines = R"(
-#line 3000
+#line 3000 0
 #define TURNIP_FRAGMENT_TEXTURE(A, B)
 #define TURNIP_FRAGMENT_SAMPLE(A, B) vec4(0)
 )";
 	const char *const Shader::lightingVertexCode = R"(
-#line 4000
+#line 4000 0
 #ifndef TURNIP_LIGHTING_VDATA
 #error "Something went wrong"
 #endif
@@ -89,6 +89,7 @@ layout(location = 3) in vec2 uv0;
 layout(location = 0) uniform mat4 MVP;
 layout(location = 1) uniform mat4 M;
 layout(location = 2) uniform mat4 lightMVP;
+layout(location = 5) uniform vec3 camPos;
 
 layout(location = 0) out struct VertexOut {
     vec2 uv0;
@@ -103,18 +104,18 @@ void main(){
     OUT.lightDirection = normalize( (lightMVP * vec4(0,0,1,0)).xyz ); // Directional Light
     OUT.shadowmapPos = lightMVP * vec4(position, 1);
 
-    OUT.vData = TURNIP_LIGHTING_VDATA_FILL_FUNC (vec3(0), normalize(vec3(M * vec4(normal, 0))), vec3(0));
+    OUT.vData = TURNIP_LIGHTING_VDATA_FILL_FUNC (normalize(camPos - (M * vec4(position, 1)).xyz), normalize(vec3(M * vec4(normal, 0))), vec3(0));
 }
 )";
 
 	const char *const Shader::lightingFragmentDefines = R"(
-#line 5000
+#line 5000 0
 #define TURNIP_FRAGMENT_TEXTURE(A, B) layout(location = 16 + A) \
                                       uniform sampler2D TURNIP_TEXTURE_NAME(B);
 #define TURNIP_FRAGMENT_SAMPLE(TEXTURE_NAME, UV) texture(TURNIP_TEXTURE_NAME(TEXTURE_NAME), UV)
 )";
 	const char *const Shader::lightingFragmentCode = R"(
-#line 6000
+#line 6000 0
 layout(location = 0) in struct {
     vec2 uv0;
     vec4 shadowmapPos;
