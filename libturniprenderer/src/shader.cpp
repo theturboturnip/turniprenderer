@@ -160,14 +160,14 @@ void main() {
 }
 )";
 		// TODO: Make this a lighting shader
-		/*transparentColorShader = context.resources.addResource(UnlitShader(mvpVertexShader, R"(
+		transparentColorShader = context.resources.addResource(UnlitShader(mvpVertexShader, R"(
 layout(location = 0) out vec4 color;
 layout(location = 1) uniform vec4 colorUniform;
 
 void main(){
     color = colorUniform;
 }
-)"));*/
+)"));
 		//transparentColorShader = context.resources.addResource(Shader(lightingCode));
 
 		depthOnlyShader = context.resources.addResource(UnlitShader(mvpVertexShader, R"(

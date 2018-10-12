@@ -64,6 +64,7 @@ vec3 PBRSchlickFresnel(float HdotV, vec3 fresnelColor){
 	//return HdotV + fresnelColor * pow(1.0 - HdotV, 5);
 	return mix(fresnelColor, vec3(1), pow(1.0 - HdotV, 5));
 }
+// TODO: Roughness should contribute to this for IBL (see learnopengl.com)
 vec3 PBRFresnelColor(vec3 albedo, float metallic){
 	return mix(vec3(0.04), albedo, metallic);
 }

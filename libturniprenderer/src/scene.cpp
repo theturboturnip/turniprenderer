@@ -77,16 +77,24 @@ namespace TurnipRenderer {
 
 				Material::TransparencyMode transparencyMode = Material::TransparencyMode::Opaque;
 				float assimpOpacity;
-				material->Get(AI_MATKEY_OPACITY, assimpOpacity);
-				// TODO: Do something to check if the matkey is present
-				if (assimpOpacity < 1.0f && assimpOpacity != 0.0f){ // 0.0f is used as a null value
+				;
+                // TODO: Do something to check if the matkey is present
+				if (material->Get(AI_MATKEY_OPACITY, assimpOpacity) == AI_SUCCESS && assimpOpacity < 1.0f){
 					transparencyMode = Material::TransparencyMode::Translucent;
 					fprintf(stdout, "Opacity was %f, => material is translucent\n", assimpOpacity);
 				}
+				int assimpTwosided = -1;
+				material->Get(AI_MATKEY_TWOSIDED, assimpTwosided);
+				fprintf(stdout, "Is Twosided: %d\n",assimpTwosided);
 				
 				ResourceHandle<Texture> texture;
+				fprintf(stdout, "\t\nTotal ALPHA texture counts: %d\n", material->GetTextureCount(aiTextureType_OPACITY));
 				if (material->GetTextureCount(aiTextureType_DIFFUSE) > 0){
 					aiString path;
+					int assimpTexFlags = -1;
+					if (material->Get(AI_MATKEY_TEXFLAGS(aiTextureType_DIFFUSE, 0), assimpTexFlags)
+						== AI_SUCCESS)
+						fprintf(stdout, "Upcoming TexFlags: 0x%08x\n", assimpTexFlags);
 					material->GetTexture(aiTextureType_DIFFUSE, 0, &path);
 					std::string pathRelativeToFile(path.C_Str());
 					std::string actualPath = AssetManager::pathRelativeToDirectory(scenePath, pathRelativeToFile);
