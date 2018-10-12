@@ -19,10 +19,12 @@ int main(){
 	TurnipRenderer::Context context("TEST");
 	context.setLightingShaderPath("assets/shaders/pbr.lighting");
 	context.initWindow();
+	context.scene.addModel("assets/sponza/sponza_demo.fbx")->transform.setLocalScale(glm::vec3(0.001));
+	//context.scene.addModel("assets/sphere_demo.fbx");
 	context.initDemoScene();
 	context.scene.camera->addComponent<FreeCameraComponent>();
 	context.scene.systems.push_back(std::make_unique<FreeCameraSystem>(context));
-	auto* light = context.scene.addObjectToEndOfRoot("Light", glm::vec3(0,0,0), glm::vec3(-90,0,0));
+	auto* light = context.scene.addObjectToEndOfRoot("Light", glm::vec3(0,0,0), glm::vec3(-80,0,0));
 	light->
 		addComponent<TurnipRenderer::DirectionalLight>(glm::uvec2(2048), glm::vec3(1,1,0.9f));
 	

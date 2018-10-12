@@ -100,7 +100,8 @@ namespace TurnipRenderer {
 		context.shadowmapsToUse.push_back(Context::Shadowmap{
 				directionalLight.shadowmapColorBuffer,
 					directionalLight.shadowmapDepthBuffer,
-					transformProjectionFromWorld
+					transformProjectionFromWorld,
+					transformViewFromWorld
 					});
 	}
 };

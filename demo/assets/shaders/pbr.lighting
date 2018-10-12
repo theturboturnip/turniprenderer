@@ -4,12 +4,12 @@
 #define PI 3.14158265359
 
 struct PBRVertex {
-	mat3 vTBN;
+	vec3 normal_worldSpace;
 	vec3 viewDirection_worldSpace;
 };
 PBRVertex PBRFillVertex(vec3 viewDirection, vec3 normal, vec3 tangent){
 	PBRVertex vertex;
-	vertex.vTBN = mat3(tangent, cross(normal, tangent), normal);
+	vertex.normal_worldSpace = normal;
 	vertex.viewDirection_worldSpace = viewDirection;
 	return vertex;
 }
@@ -24,11 +24,11 @@ struct PBRFragment {
 TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
 PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 	PBRFragment fragment;
-	fragment.albedo = TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0);
-	fragment.roughness = 1.0f;
+	fragment.albedo = pow(TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0), vec4(2.2, 2.2, 2.2, 1));
+	fragment.roughness = 0.1f;
 	fragment.metallic = 0.0f;
 
-	fragment.normal_worldSpace = vertex.vTBN[2];
+	fragment.normal_worldSpace = vertex.normal_worldSpace;
 	return fragment;
 }
 
@@ -36,20 +36,20 @@ float PBRLightingDot(vec3 one, vec3 two){
 	return max(0.0, dot(one, two));
 }
 float PBRTrowbridgeReitzGGX(float NdotH, float roughness){
-	float roughness2 = roughness * roughness;
+	float roughness2 = roughness * roughness * roughness * roughness; // Disney thingy: Use roughness^4 instead of roughness^2 to look more natural
 	float NdotH2 = NdotH * NdotH;
 
 	float nom = roughness2;
 	float denom = (NdotH2 * (roughness2 - 1.0) + 1.0);
 	denom = PI * denom * denom;
 
-	return nom/denom;
+	return nom/max(denom, 0.0001);
 }
 float PBRSchlickGGX(float NdotVec, float k){
 	float nom = NdotVec;
 	float denom = NdotVec * (1 - k) + k;
 
-	return nom/denom;
+	return nom/max(denom, 0.0001);
 }
 float PBRSmithTotalGeometryGGX(float NdotV, float NdotL, float k){
 	return PBRSchlickGGX(NdotV, k) * PBRSchlickGGX(NdotL, k);
@@ -60,23 +60,28 @@ float PBRKFromDirect(float roughness){
 float PBRKFromIBL(float roughness){
 	return (roughness * roughness) / 2.0;
 }
-vec3 PBRSchlickFresnel(float NdotV, vec3 fresnelColor){
-	return mix(fresnelColor, vec3(0), pow(1.0 - NdotV, 5));
+vec3 PBRSchlickFresnel(float HdotV, vec3 fresnelColor){
+	//return HdotV + fresnelColor * pow(1.0 - HdotV, 5);
+	return mix(fresnelColor, vec3(1), pow(1.0 - HdotV, 5));
 }
 vec3 PBRFresnelColor(vec3 albedo, float metallic){
 	return mix(vec3(0.04), albedo, metallic);
 }
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
-	vec3 L = -normalize(light.direction_worldSpace);
+	//return vec4(1,0,0,1);
+	vec3 L = normalize(light.direction_worldSpace);
+	//return vec4(L/2 + 0.5, 1);
 	vec3 V = normalize(vertex.viewDirection_worldSpace);
 	vec3 N = normalize(fragment.normal_worldSpace);
+	//return vec4(N/2 + 0.5, 1);
 	vec3 H = normalize(V+L);
+	//return vec4(N, 1);
 
 	float NdotH = PBRLightingDot(N, H);
 	float NdotV = PBRLightingDot(N, V);
 	float NdotL = PBRLightingDot(N, L);
 	float HdotV = PBRLightingDot(H, V);
-	//return vec4(0, NdotV, 0, 0);
+	//return vec4(1 - NdotV, 0, 0, 0);
 
 	vec3 brdfF = PBRSchlickFresnel(HdotV, PBRFresnelColor(fragment.albedo.rgb, fragment.metallic));
 	float brdfNDF = PBRTrowbridgeReitzGGX(NdotH, fragment.roughness);
@@ -87,18 +92,19 @@ vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	vec3 specularNumerator = vec3(brdfNDF * brdfG); // Miss out F because it is the specularFraction
 	//return vec4(specularNumerator, 0);
 	vec3 specularDenominator = vec3(4 * NdotV * NdotL);
-	vec3 specularColor = specularNumerator / max(specularDenominator, 0.0001);
+	vec3 specularColor = specularNumerator / max(specularDenominator, 0.00001);
+	//return vec4(brdfNDF, brdfG, brdfF.x, 1);
 	//return vec4(specularColor, 0);
 	//return vec4(specularColor * specularFraction, 0);
 	
 	vec3 diffuseFraction = (1 - specularFraction) * (1 - fragment.metallic);
-	vec3 diffuseColor = fragment.albedo.rgb / PI;
+	vec3 diffuseColor = fragment.albedo.rgb;// / PI;
 
 	vec3 finalColor = (diffuseColor * diffuseFraction + specularFraction * specularColor) * light.radiance * NdotL;
 
 	// Correction
-	//finalColor = finalColor / (finalColor + vec3(1.0));
-	//finalColor = pow(finalColor, vec3(1.0/2.2));
+	finalColor = finalColor / (finalColor + vec3(1.0));
+	finalColor = pow(finalColor, vec3(1.0/2.2));
 	
 	return vec4(finalColor, fragment.albedo.a);
 }

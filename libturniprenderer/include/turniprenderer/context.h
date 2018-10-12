@@ -82,6 +82,7 @@ namespace TurnipRenderer{
 			ResourceHandle<const ColorBuffer> colorBuffer;
 			ResourceHandle<const DepthBuffer> depthBuffer;
 			glm::mat4 VP;
+			glm::mat4 V;
 		};
 		std::vector<Shadowmap> shadowmapsToUse;
 

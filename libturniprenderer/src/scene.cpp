@@ -20,12 +20,12 @@ namespace TurnipRenderer {
 	}
 	Scene::~Scene() = default;
 
-	void Scene::addModel(std::string scenePath){
+	Entity* Scene::addModel(std::string scenePath){
 		Assimp::Importer importer;
 		const aiScene* importedScene = importer.ReadFile(scenePath, aiProcess_Triangulate | aiProcess_FlipUVs);
 		if(!importedScene || importedScene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !importedScene->mRootNode){
 			fprintf(stderr, "Scene at %s failed to load, error %s\n", scenePath.c_str(), importer.GetErrorString());
-			return;
+			return nullptr;
 		}
 
 		auto glmFromAssimpVec2 = [](auto vec) -> glm::vec2 {
@@ -172,9 +172,10 @@ namespace TurnipRenderer {
 			if (workItem.node == importedScene->mRootNode) modelParent = entity;
 
 		}
-		modelParent->transform.setLocalScale(glm::vec3(0.001));
 
 		// TODO: Clean this up
 		//aiReleaseImport(importedScene);
+
+		return modelParent;
 	}
 }

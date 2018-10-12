@@ -90,6 +90,7 @@ layout(location = 0) uniform mat4 MVP;
 layout(location = 1) uniform mat4 M;
 layout(location = 2) uniform mat4 lightMVP;
 layout(location = 5) uniform vec3 camPos;
+layout(location = 6) uniform vec3 lightDirection;
 
 layout(location = 0) out struct VertexOut {
     vec2 uv0;
@@ -101,7 +102,7 @@ layout(location = 0) out struct VertexOut {
 void main(){
     gl_Position = MVP * vec4(position, 1);
     OUT.uv0 = uv0;
-    OUT.lightDirection = normalize( (lightMVP * vec4(0,0,1,0)).xyz ); // Directional Light
+    OUT.lightDirection = lightDirection;
     OUT.shadowmapPos = lightMVP * vec4(position, 1);
 
     OUT.vData = TURNIP_LIGHTING_VDATA_FILL_FUNC (normalize(camPos - (M * vec4(position, 1)).xyz), normalize(vec3(M * vec4(normal, 0))), vec3(0));
@@ -133,7 +134,7 @@ void main(){
     {
         vec3 lightSpaceCoord = IN.shadowmapPos.xyz / IN.shadowmapPos.w;
         lightSpaceCoord = lightSpaceCoord * 0.5 + 0.5; // Transform to 0-1
-        lightSpaceCoord.z -= 0.005; // Bias
+        lightSpaceCoord.z -= 0.05; // Bias
         dirLight.radiance = texture(shadowmapColor, lightSpaceCoord.xy).rgb * texture(shadowmapDepth, lightSpaceCoord);
     }
     dirLight.direction_worldSpace = IN.lightingDirection;

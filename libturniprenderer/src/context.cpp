@@ -77,8 +77,6 @@ namespace TurnipRenderer{
 	}
 
 	void Context::initDemoScene(){
-		scene.addModel("assets/sponza/sponza_demo.fbx");
-
 		scene.camera = scene.addObjectToEndOfRoot("Camera", glm::vec3(0,0,10));
 
 		cameraData.fovDegrees = 60;
@@ -282,33 +280,39 @@ void main(){
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->renderable() && entity->material->isOpaque()){
-					if (entity->shader && entity->material && entity->material->texture){
+					if (entity->shader){
 						glUseProgram(entity->shader->programId);
-						renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->textureId);
-						glUniform1i(16, 0); // Bind uniform 16 to texture 0
+						if (entity->material->texture){
+							renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->textureId);
+							glUniform1i(16, 0); // Bind uniform 16 to texture 0
+						}
 					}else{
 						glUseProgram(debugShaders.debugOpaqueShader->programId);
 					}
 					glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
 					glm::mat4 MVP = transformProjectionFromWorld * M;
 					glm::mat4 lightMVP;
-					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material && entity->material->texture){
+					glm::vec3 lightDirection;
+					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material){
 						renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
 						glUniform1i(3, 1);
 						renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
 						glUniform1i(4, 2);
 						lightMVP = shadowmapsToUse[0].VP * M;
+						lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
 					}
 
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
-					if (entity->shader && entity->material && entity->material->texture){
+					if (entity->shader){
 						glUniformMatrix4fv(1, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&M));
 						glUniformMatrix4fv(2, 1, GL_FALSE,
 										   reinterpret_cast<const GLfloat*>(&lightMVP));
 						glUniform3fv(5, 1,
 									 reinterpret_cast<const GLfloat*>(&cameraPos));
+						glUniform3fv(6, 1,
+									 reinterpret_cast<const GLfloat*>(&lightDirection));
 					}
 
 					renderer.drawMesh(*entity->mesh);

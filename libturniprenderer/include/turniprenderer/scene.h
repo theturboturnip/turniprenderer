@@ -21,7 +21,7 @@ namespace TurnipRenderer {
 		using Heirarchy<Entity>::NodeBase;
 		using Heirarchy<Entity>::heirarchy;
 
-		void addModel(std::string path);
+		Entity* addModel(std::string path);
 		
 		template<typename... Args>
 		Entity* addObjectToEndOfRoot(Args... args){
