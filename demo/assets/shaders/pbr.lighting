@@ -67,7 +67,7 @@ vec3 PBRSchlickFresnel(float HdotV, vec3 fresnelColor){
 vec3 PBRFresnelColor(vec3 albedo, float metallic){
 	return mix(vec3(0.04), albedo, metallic);
 }
-vec3 PBRLightingForLight(vec3 brdfF, float NdotH, float NdotV, float NdotL, PBRVertex vertex, PBRFragment fragment, TurnipLight light){
+vec3 PBRDirectContribution(vec3 brdfF, float NdotH, float NdotV, float NdotL, PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	float brdfNDF = PBRTrowbridgeReitzGGX(NdotH, fragment.roughness);
 	float brdfG = PBRSmithTotalGeometryGGX(NdotV, NdotL,
 										   PBRKFromDirect(fragment.roughness));
@@ -86,6 +86,17 @@ vec3 PBRLightingForLight(vec3 brdfF, float NdotH, float NdotV, float NdotL, PBRV
 
 	return (diffuseColor * diffuseFraction + specularFraction * specularColor) * light.radiance * NdotL;
 }
+vec3 PBRIndirectContribution(vec3 brdfF, PBRVertex vertex, PBRFragment fragment){
+	vec3 specularFraction = brdfF;
+	vec3 diffuseFraction = 1.0 - specularFraction;
+
+	vec3 irradiance = vec3(0.5, 1.0, 1.0) * 0.5f;
+
+	vec3 diffuseColor = irradiance * fragment.albedo.rgb;
+	vec3 specularColor = vec3(0); // TODO
+	
+	return diffuseColor * diffuseFraction + specularColor * specularFraction;
+}
 vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	vec3 L = normalize(light.direction_worldSpace);
 	vec3 V = normalize(vertex.viewDirection_worldSpace);
@@ -98,10 +109,10 @@ vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	float HdotV = PBRLightingDot(H, V);
 
 	vec3 brdfF = PBRSchlickFresnel(HdotV, PBRFresnelColor(fragment.albedo.rgb, fragment.metallic));
-	vec3 specularFraction = brdfF;
 
-	vec3 finalColor = PBRLightingForLight(brdfF, NdotH, NdotV, NdotL,
-										   vertex, fragment, light);
+	vec3 finalColor = PBRDirectContribution(brdfF, NdotH, NdotV, NdotL,
+											vertex, fragment, light);
+	finalColor += PBRIndirectContribution(brdfF, vertex, fragment);
 
 	// Correction
 	finalColor = finalColor / (finalColor + vec3(1.0));
