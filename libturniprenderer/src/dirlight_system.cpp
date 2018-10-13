@@ -1,9 +1,9 @@
-#include "dirlight_system.h"
+#include "turniprenderer/dirlight_system.h"
 
 #include <assert.h>
 
-#include "context.h"
-#include "bounds.h"
+#include "turniprenderer/context.h"
+#include "turniprenderer/bounds.h"
 
 namespace TurnipRenderer {
 	void DirectionalLightRenderer::runOnEntity(Entity* entity, const System::Inputs inputs, const System::Outputs outputs){

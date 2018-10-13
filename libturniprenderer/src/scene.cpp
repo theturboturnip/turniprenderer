@@ -1,4 +1,4 @@
-#include "scene.h"
+#include "turniprenderer/scene.h"
 
 #include <functional>
 #include <queue>
@@ -7,11 +7,11 @@
 #include "assimp/scene.h"
 #include "assimp/postprocess.h"
 
-#include "context.h"
-#include "entity.h"
-#include "mesh.h"
-#include "resource.h"
-#include "system.h"
+#include "turniprenderer/context.h"
+#include "turniprenderer/entity.h"
+#include "turniprenderer/mesh.h"
+#include "turniprenderer/resource.h"
+#include "turniprenderer/system.h"
 
 namespace TurnipRenderer {
 	Scene::Scene(Context& context) : ContextAware(context), Heirarchy<Entity>(

@@ -1,9 +1,9 @@
-#include "debug_window.h"
+#include "turniprenderer/debug_window.h"
 
-#include "context.h"
-#include "entity.h"
+#include "turniprenderer/context.h"
+#include "turniprenderer/entity.h"
 
-#include "private/external/imgui.h"
+#include "turniprenderer/private/external/imgui.h"
 
 namespace TurnipRenderer {
 	void Debug::DebugWindow::show(){

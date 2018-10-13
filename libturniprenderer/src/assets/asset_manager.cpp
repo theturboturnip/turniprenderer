@@ -1,12 +1,12 @@
-#include "assets/asset_manager.h"
+#include "turniprenderer/assets/asset_manager.h"
 
 #include <fstream>
 #include <iomanip>
 #include <assert.h>
 
-#include "context.h"
-#include "texture.h"
-#include "shader.h"
+#include "turniprenderer/context.h"
+#include "turniprenderer/texture.h"
+#include "turniprenderer/shader.h"
 
 namespace TurnipRenderer {
 	std::string AssetManager::directoryName(std::string filepath){

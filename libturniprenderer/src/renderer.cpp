@@ -1,6 +1,6 @@
-#include "renderer.h"
+#include "turniprenderer/renderer.h"
 
-#include "context.h"
+#include "turniprenderer/context.h"
 
 #include <sstream>
 

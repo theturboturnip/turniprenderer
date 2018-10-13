@@ -1,13 +1,13 @@
-#include "context.h"
+#include "turniprenderer/context.h"
 
 #include <cstdio>
 
-#include "assets/asset_manager.h"
-#include "entity.h"
-#include "mesh.h"
-#include "system.h"
-#include "private/external/imgui.h"
-#include "dirlight_system.h"
+#include "turniprenderer/assets/asset_manager.h"
+#include "turniprenderer/entity.h"
+#include "turniprenderer/mesh.h"
+#include "turniprenderer/system.h"
+#include "turniprenderer/private/external/imgui.h"
+#include "turniprenderer/dirlight_system.h"
 
 namespace TurnipRenderer{
 	Context::Context(std::string name) :

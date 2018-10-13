@@ -1,7 +1,7 @@
-#include "shader.h"
+#include "turniprenderer/shader.h"
 
 #include <vector>
-#include "context.h"
+#include "turniprenderer/context.h"
 
 namespace TurnipRenderer {
 	const char *const ShaderConstants::versionExtensionPrefix = R"(
