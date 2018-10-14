@@ -30,6 +30,9 @@ add_subdirectory(stb)
 set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} stb)
 set(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS} ${CMAKE_CURRENT_SOURCE_DIR}/stb/include)
 
+# FlatBuffers
+add_subdirectory(flatbuffers)
+
 # Setup the parent scope versions
 set(EXTERNAL_LIBRARIES ${EXTERNAL_LIBRARIES} PARENT_SCOPE)
 set(EXTERNAL_INCLUDE_DIRS ${EXTERNAL_INCLUDE_DIRS} PARENT_SCOPE)

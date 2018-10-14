@@ -4,3 +4,6 @@
 [submodule "external/assimp"]
 	path = external/assimp
 	url = https://github.com/assimp/assimp.git
+[submodule "external/flatbuffers"]
+	path = external/flatbuffers
+	url = https://github.com/theturboturnip/flatbuffers.git

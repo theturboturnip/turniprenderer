@@ -10,7 +10,7 @@ _build:
 	@mkdir -p ./build/ && cd ./build/ && cmake .. && make --no-print-directory
 
 clean:
-	rm -rf ./build/
+	rm -rf ./build/libturniprenderer ./build/demo
 
 rebuild: clean _build
 
