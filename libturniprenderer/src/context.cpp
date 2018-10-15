@@ -84,7 +84,7 @@ namespace TurnipRenderer{
 		cameraData.depthMax = 500.f;
 		cameraData.updateProjectionMatrix();
 
-		debugTransparentProgram = resources.addResource(UnlitShader(R"(
+		debugTransparentProgram = resources.addResource(std::make_unique<UnlitShader>(R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -134,7 +134,7 @@ void main(){
     OUT.uv0 = uv0;
 }
 )";
-		postProcessPassthrough = resources.addResource(UnlitShader(passthroughVertexShader,
+		postProcessPassthrough = resources.addResource(std::make_unique<UnlitShader>(passthroughVertexShader,
 															  R"(
 layout(location = 0) uniform sampler2D tex;
 
@@ -149,7 +149,7 @@ color = vec4(texture(tex, IN.uv0));
 }
 )"));
 
-		transparencyResolve = resources.addResource(UnlitShader(passthroughVertexShader,
+		transparencyResolve = resources.addResource(std::make_unique<UnlitShader>(passthroughVertexShader,
 															  R"(
 layout(location = 0) uniform sampler2D bucket0;
 layout(location = 1) uniform sampler2D bucket1;

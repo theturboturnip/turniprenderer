@@ -2,6 +2,7 @@
 
 #include <atomic>
 #include <iostream>
+#include <memory>
 
 namespace TurnipRenderer {
 
@@ -11,10 +12,10 @@ namespace TurnipRenderer {
 	template<typename T>
 	class ResourceContainer{
 	public:
-		T resource;
+		std::unique_ptr<T> resource;
 
 		ResourceContainer() : refCount(0) {}
-		ResourceContainer(T&& newResource) : resource(newResource), refCount(0) {}
+		ResourceContainer(std::unique_ptr<T>&& newResource) : resource(std::move(newResource)), refCount(0) {}
 		ResourceContainer(const ResourceContainer<T>& copyFrom) = delete;
 		ResourceContainer(ResourceContainer<T>&& moveFrom)
 			: resource(std::move(moveFrom.resource)), refCount(moveFrom.refCount.load()) {
@@ -78,11 +79,11 @@ namespace TurnipRenderer {
         }
         T& operator*() const {
 			// TODO: Fail in some way when container == nullptr?
-            return container->resource;
+            return *container->resource;
         }
 		explicit operator T*() const {
 			if (container)
-				return &container->resource;
+				return container->resource.get();
 			return nullptr;
 		}
 		explicit operator bool() const {

@@ -6,13 +6,17 @@
 namespace TurnipRenderer {
 	class Material {
 	public:
-		ResourceHandle<Texture> texture;
-		
 		enum class TransparencyMode {
 			Opaque,
 				Translucent,
 				AlphaClipped
 				};
+		
+		Material(ResourceHandle<Texture> texture, TransparencyMode transparencyMode, glm::vec4 color)
+			: texture(texture), transparencyMode(transparencyMode), color(color) {}
+		
+		ResourceHandle<Texture> texture;
+		
 		TransparencyMode transparencyMode;
 		glm::vec4 color;
 

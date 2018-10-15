@@ -36,7 +36,7 @@ namespace TurnipRenderer {
 		ResourceHandle<T> existingAsset;
 		context.resources.getNamedResource(existingAsset, path);
 		if (existingAsset) return existingAsset;
-		return context.resources.addNamedResource(T(readAsset(path)), path);
+		return context.resources.addNamedResource(std::make_unique<T>(readAsset(path)), path);
 	}
 	template ResourceHandle<Texture> AssetManager::loadAsset<Texture>(std::string);
 	template<class T>
@@ -45,7 +45,7 @@ namespace TurnipRenderer {
 		ResourceHandle<T> existingAsset;
 		context.resources.getNamedResource(existingAsset, id);
 		if (existingAsset) return existingAsset;
-		return context.resources.addNamedResource(T(readAsset(path1), readAsset(path2)), id);
+		return context.resources.addNamedResource(std::make_unique<T>(readAsset(path1), readAsset(path2)), id);
 	}
 	// Shaders have changed
 	// TODO: Reconsider whether Shaders should be loaded from here at all

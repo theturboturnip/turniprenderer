@@ -15,7 +15,7 @@ namespace TurnipRenderer {
 )";
 	
 	void DebugShaders::createShaders(){
-		debugOpaqueShader = context.resources.addResource(UnlitShader(R"(
+		debugOpaqueShader = context.resources.addResource(std::make_unique<UnlitShader>(R"(
 layout(location = 0) in vec3 position;
 layout(location = 1) in vec3 normal;
 layout(location = 2) in vec3 tangent;
@@ -145,7 +145,7 @@ void main(){
 )";
 	
 	void DefaultShaders::createShaders(){
-		phongOpaqueShader = context.resources.addResource(Shader(lightingCode));
+		phongOpaqueShader = context.resources.addResource(std::make_unique<Shader>(lightingCode));
 		fprintf(stdout, "Finished compiling PBR shader\n");
 		std::string mvpVertexShader = R"(
 layout(location = 0) in vec3 position;
@@ -160,7 +160,7 @@ void main() {
 }
 )";
 		// TODO: Make this a lighting shader
-		transparentColorShader = context.resources.addResource(UnlitShader(mvpVertexShader, R"(
+		transparentColorShader = context.resources.addResource(std::make_unique<UnlitShader>(mvpVertexShader, R"(
 layout(location = 0) out vec4 color;
 layout(location = 1) uniform vec4 colorUniform;
 
@@ -170,7 +170,7 @@ void main(){
 )"));
 		//transparentColorShader = context.resources.addResource(Shader(lightingCode));
 
-		depthOnlyShader = context.resources.addResource(UnlitShader(mvpVertexShader, R"(
+		depthOnlyShader = context.resources.addResource(std::make_unique<UnlitShader>(mvpVertexShader, R"(
 void main(){}
 )"));
 	}

@@ -93,7 +93,7 @@ namespace TurnipRenderer {
 				quadData.indices.push_back(3);
 			}
 
-			fullscreenQuad = context.resources.addResource(Mesh(std::move(quadData)));
+			fullscreenQuad = context.resources.addResource(std::make_unique<Mesh>(std::move(quadData)));
 		}
 	}
 	Renderer::~Renderer(){
@@ -144,7 +144,7 @@ namespace TurnipRenderer {
 
 	ResourceHandle<const ColorBuffer> Renderer::createColorBuffer(TextureConfig config){
 		config.compare = TextureConfig::Compare(); // Disable comparisons
-		return resources.addResource(ColorBuffer(
+		return resources.addResource(std::make_unique<ColorBuffer>(
 										 createTextureBuffer(config),
 										 config
 										 ));
@@ -155,7 +155,7 @@ namespace TurnipRenderer {
 			GL_DEPTH_COMPONENT,
 			GL_FLOAT
 		};
-		return resources.addResource(DepthBuffer(
+		return resources.addResource(std::make_unique<DepthBuffer>(
 										 createTextureBuffer(config),
 										 config
 										 ));
@@ -205,8 +205,8 @@ namespace TurnipRenderer {
 			glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, *depthBuffer, 0);
 		checkErrors("createFramebuffer");
 		assert (glCheckFramebufferStatus(GL_FRAMEBUFFER) == GL_FRAMEBUFFER_COMPLETE);
-
-		return resources.addResource(FrameBuffer(
+		
+		return resources.addResource(std::make_unique<FrameBuffer>(
 										 frameBuffer,
 										 (colorBuffersCount ? colorBuffers[0]->config.size : depthBuffer->config.size),
 										 std::vector<ResourceHandle<const ColorBuffer>>(colorBuffers, colorBuffers + colorBuffersCount),

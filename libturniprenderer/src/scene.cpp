@@ -64,7 +64,7 @@ namespace TurnipRenderer {
 						meshData.indices.push_back(face.mIndices[j]);
 				}
 				
-				return context.resources.addResource(Mesh(std::move(meshData)));
+				return context.resources.addResource(std::make_unique<Mesh>(std::move(meshData)));
 			};
 			for (unsigned int i = 0; i < meshes.size(); i++){
 				meshes[i] = createMeshFromAssimp(importedScene->mMeshes[i]);
@@ -122,11 +122,11 @@ namespace TurnipRenderer {
 				}
 				}
 
-				return context.resources.addResource(Material{
-						texture,
-							transparencyMode,
-							color
-					});
+				return context.resources.addResource(std::make_unique<Material>(
+														 texture,
+														 transparencyMode,
+														 color
+														 ));
 			};
 			fprintf(stdout, "Material Report:\n");
 			for (unsigned int i = 0; i < materials.size(); i++){

@@ -17,9 +17,13 @@ namespace TurnipRenderer {
         template<typename T>
         void addResource(T&&) = delete;
 		template<typename T>
+        void addResource(std::unique_ptr<T>&&) = delete;
+		template<typename T>
 		void addNamedResource(T&&, size_t) = delete;
 		template<typename T>
-		void getNamedResource(ResourceContainer<T>&, size_t) = delete;
+		void addNamedResource(std::unique_ptr<T>&&, std::string&) = delete;
+		template<typename T>
+		void getNamedResource(ResourceContainer<T>&, std::string&) = delete;
 		
 		void destroyAllUnused(){}
 		inline size_t totalResources() const {
@@ -32,13 +36,20 @@ namespace TurnipRenderer {
 		
 	public:
 		using Base::addResource;
-        ResourceHandle<T> addResource(T&& resource){
+		// TODO: Only included for compat. Figure out if we want this or not.
+		ResourceHandle<T> addResource(T&& resource){
+			return addResource(std::make_unique<T>(resource));
+		}
+        ResourceHandle<T> addResource(std::unique_ptr<T>&& resource){
 			unnamedResources.push_back(std::make_unique<ResourceContainer<T>>(std::move(resource)));
 			auto toReturn = ResourceHandle<T>(unnamedResources.back().get());
 			return toReturn;
 		}
 		using Base::addNamedResource;
 		ResourceHandle<T> addNamedResource(T&& resource, std::string& id){
+			return addNamedResource(std::make_unique<T>(resource), id);
+		}
+		ResourceHandle<T> addNamedResource(std::unique_ptr<T>&& resource, std::string& id){
 			auto uniquePtr = std::make_unique<ResourceContainer<T>>(std::move(resource));
 			auto toReturn = ResourceHandle<T>(uniquePtr.get());
 			namedResources.insert({id, std::move(uniquePtr)});

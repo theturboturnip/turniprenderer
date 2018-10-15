@@ -105,6 +105,8 @@ namespace TurnipRenderer{
 		ResourceHandle<UnlitShader> postProcessPassthrough;
 		ResourceHandle<UnlitShader> transparencyResolve;
 
+		ResourceHandle<Texture> whiteTexture;
+
 		void createFramebuffers();
 	};
 }
