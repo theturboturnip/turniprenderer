@@ -65,6 +65,7 @@ namespace TurnipRenderer {
 		}
 		glTexImage2D(GL_TEXTURE_2D, 0, imageFormat, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data.data());
 		glGenerateMipmap(GL_TEXTURE_2D);
+		bindlessTextureId = glGetTextureHandleARB(textureId);
 
 		{
 			GLuint glError = glGetError();

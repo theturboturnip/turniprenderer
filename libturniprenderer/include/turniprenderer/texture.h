@@ -9,6 +9,7 @@ namespace TurnipRenderer {
 	public:
 		Texture(std::vector<unsigned char>&& assetData);
 		GLuint textureId = 0;
+		GLuint64 bindlessTextureId = 0;
 		int width;
 		int height;
 		int channels;
