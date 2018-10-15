@@ -8,6 +8,8 @@
 #include "turniprenderer/texture.h"
 #include "turniprenderer/shader.h"
 
+#include "stb/stb_image.h" // TODO: turniprenderer/external/stb.h
+
 namespace TurnipRenderer {
 	std::string AssetManager::directoryName(std::string filepath){
 		return filepath.substr(0, filepath.rfind('/')); // TODO: Multiplat
@@ -38,7 +40,23 @@ namespace TurnipRenderer {
 		if (existingAsset) return existingAsset;
 		return context.resources.addNamedResource(std::make_unique<T>(readAsset(path)), path);
 	}
-	template ResourceHandle<Texture> AssetManager::loadAsset<Texture>(std::string);
+	template<>
+	ResourceHandle<Texture> AssetManager::loadAsset<Texture>(std::string path){
+		ResourceHandle<Texture> existingAsset;
+		context.resources.getNamedResource(existingAsset, path);
+		if (existingAsset) return existingAsset;
+
+		// Use stb to load the image data
+		std::vector<unsigned char> assetData = readAsset(path);
+
+		int width, height, channels;
+		unsigned char* dataPtr = stbi_load_from_memory(assetData.data(), assetData.size(), &width, &height, &channels, 0);
+		assert(dataPtr);
+		std::vector<unsigned char> data(dataPtr, dataPtr + (width * height * channels));
+		stbi_image_free(dataPtr);
+		
+		return context.resources.addNamedResource(std::make_unique<Texture>(context, std::move(data), width, height, channels), path);
+	}
 	template<class T>
 	ResourceHandle<T> AssetManager::loadAsset(std::string path1, std::string path2){
 		std::string id = path1+path2;

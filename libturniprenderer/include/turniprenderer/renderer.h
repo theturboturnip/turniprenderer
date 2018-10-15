@@ -56,16 +56,18 @@ namespace TurnipRenderer {
 			  compare(compare) {}
 	};
 
-	// TODO: Destructor
+	// TODO: Destructor? Figure how to do that
 	struct AddressableBuffer {
 		AddressableBuffer(GLuint handle, TextureConfig config)
-			: config(config), handle(handle)  {}
+			: config(config), handle(handle), bindlessHandle(0)  {}
 		TextureConfig config;
 
 	private:
 		friend class Renderer;
 
 		GLuint handle;
+		GLuint64 bindlessHandle;
+		// TODO: This will be weird if someone tries to use this with a bindless handle?
 		operator GLuint() const {
 			return handle;
 		}
@@ -128,6 +130,7 @@ namespace TurnipRenderer {
 		void drawFullscreenQuadAdvanced(ShaderBase* shader, std::function<void()> bindTextures);
 
 		ResourceHandle<const ColorBuffer> createColorBuffer(TextureConfig);
+		void fillColorBuffer(ResourceHandle<const ColorBuffer>, std::vector<unsigned char>& data);
 		ResourceHandle<const DepthBuffer> createDepthBuffer(TextureConfig);
 		template<class Container>
 		ResourceHandle<const FrameBuffer> createFramebuffer(const Container& colorBuffers, ResourceHandle<const DepthBuffer> depthBuffer = nullptr){
@@ -138,6 +141,7 @@ namespace TurnipRenderer {
 		}
 		ResourceHandle<const FrameBuffer> createFramebuffer(const ResourceHandle<const ColorBuffer>* colorBuffers, size_t colorBuffersCount, ResourceHandle<const DepthBuffer> depthBuffer = nullptr);
 
+		// TODO: Move to push/pop paradigm?
 		inline void setOperation(const char* operationMessage){
 			currentOperationMessage = operationMessage;
 		}

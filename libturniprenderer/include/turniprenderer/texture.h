@@ -1,18 +1,19 @@
 #pragma once
 
-#include "private/external/gl.h"
+#include "turniprenderer/private/external/gl.h"
+#include "turniprenderer/context_aware.h"
+#include "turniprenderer/renderer.h"
 
 #include <vector>
 
 namespace TurnipRenderer {
-	class Texture {
+	class Texture : ContextAware {
 	public:
-		Texture(std::vector<unsigned char>&& assetData);
-		GLuint textureId = 0;
-		GLuint64 bindlessTextureId = 0;
-		int width;
-		int height;
-		int channels;
+		Texture(Context& context, std::vector<unsigned char>&& data, int width, int height, int channels);
+		//std::vector<unsigned char>&& assetData);
+
+		ResourceHandle<const ColorBuffer> buffer;
+		
 		std::vector<unsigned char> data;
 	};
 };

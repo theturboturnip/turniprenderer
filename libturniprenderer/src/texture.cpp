@@ -1,6 +1,6 @@
 #include "turniprenderer/texture.h"
 
-#include "stb/stb_image.h"
+#include "turniprenderer/context.h"
 
 #include <cstdio>
 #include <assert.h>
@@ -8,13 +8,49 @@
 #include <chrono>
 
 namespace TurnipRenderer {
-	Texture::Texture(std::vector<unsigned char>&& assetData){
-		unsigned char* dataPtr = stbi_load_from_memory(assetData.data(), assetData.size(), &width, &height, &channels, 0);
-		assert(dataPtr);
-		data = std::vector<unsigned char>(dataPtr, dataPtr + (width * height * channels));
-		stbi_image_free(dataPtr);
+	Texture::Texture(Context& context, std::vector<unsigned char>&& data, int width, int height, int channels/*std::vector<unsigned char>&& assetData*/)
+		: ContextAware(context), data(data) {
 
-		{
+		GLint internalFormat = GL_R8;
+		GLenum imageFormat = GL_RED;
+		switch(channels){
+		case 1:
+			imageFormat = GL_RED;
+			internalFormat = GL_R8;
+			break;
+		case 2:
+			imageFormat = GL_RG;
+			internalFormat = GL_RG8;
+			break;
+		case 3:
+			imageFormat = GL_RGB;
+			internalFormat = GL_RGB8;
+			break;
+		case 4:
+			imageFormat = GL_RGBA;
+			internalFormat = GL_RGBA8;
+			break;
+		default:
+			assert(false);
+		}
+		
+		TextureConfig config(
+			{width, height},
+			{
+				internalFormat,
+					imageFormat,
+					GL_UNSIGNED_BYTE
+					},
+			{ GL_LINEAR/*_MIPMAP_LINEAR*/, GL_LINEAR },
+			GL_REPEAT
+			);
+
+		buffer = context.renderer.createColorBuffer(config);
+		//context.renderer.generateMipmaps(buffer); // TODO
+		context.renderer.fillColorBuffer(buffer, this->data);
+	   
+
+		/*{
 			GLuint glError = glGetError();
 			if (glError){
 				fprintf(stderr, "Texture OpenGL Error Pre-Create: %d\n", glError);
@@ -43,10 +79,10 @@ namespace TurnipRenderer {
 			if (glError){
 				fprintf(stderr, "Texture OpenGL Error Pre-Format: %d\n", glError);
 				assert(false);
-			}
-		}
+				}
+				}*/
 
-		GLenum imageFormat = GL_RED;
+		/*GLenum imageFormat = GL_RED;
 		switch(channels){
 		case 1:
 			imageFormat = GL_RED;
@@ -63,16 +99,16 @@ namespace TurnipRenderer {
 		default:
 			assert(false);
 		}
-		glTexImage2D(GL_TEXTURE_2D, 0, imageFormat, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data.data());
-		glGenerateMipmap(GL_TEXTURE_2D);
-		bindlessTextureId = glGetTextureHandleARB(textureId);
+		glTexImage2D(GL_TEXTURE_2D, 0, imageFormat, width, height, 0, imageFormat, GL_UNSIGNED_BYTE, data.data());*/
+		//glGenerateMipmap(GL_TEXTURE_2D);
+		//bindlessTextureId = glGetTextureHandleARB(textureId);
 
-		{
+		/*{
 			GLuint glError = glGetError();
 			if (glError){
 				fprintf(stderr, "Texture OpenGL Error: %d\n", glError);
 				assert(false);
 			}
-		}
+		}*/
 	}
 };

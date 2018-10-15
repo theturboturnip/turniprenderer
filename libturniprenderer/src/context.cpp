@@ -24,8 +24,8 @@ namespace TurnipRenderer{
 		renderer.initialize(
 							name,
 							glm::uvec2(WIDTH, HEIGHT),
-							OPENGL_MAJOR,
-							OPENGL_MINOR
+							4,//OPENGL_MAJOR,
+							6//OPENGL_MINOR
 							);
 		
 		createFramebuffers();
@@ -35,6 +35,8 @@ namespace TurnipRenderer{
 
 		debugShaders.createShaders();
 		defaultShaders.createShaders();
+
+		
 
 		scene.systems.push_back(std::make_unique<DirectionalLightRenderer>(*this));
 	}
@@ -48,18 +50,21 @@ namespace TurnipRenderer{
 				{ GL_NEAREST, GL_NEAREST },
 				GL_CLAMP_TO_EDGE				
 			};
-			
+				renderer.setOperation("Initial Colorbuffer Creation");
+	
 			return renderer.createColorBuffer(config);
 		};
 		auto createDepthBuffer = [this]() {
 			TextureConfig config = {
 				glm::uvec2(WIDTH, HEIGHT),
-				{ GL_DEPTH_COMPONENT, GL_DEPTH_COMPONENT, GL_FLOAT },
+				{ GL_DEPTH_COMPONENT32, GL_DEPTH_COMPONENT, GL_FLOAT },
 				{ GL_NEAREST, GL_NEAREST },
 				GL_CLAMP_TO_EDGE				
 			};
+			renderer.setOperation("Initial Depthbuffer Creation");
 			return renderer.createDepthBuffer(config);
 		};
+
 
 		renderPassData.postProcessBuffers[0] = createColorBuffer(GL_RGB8, GL_RGB);
 		renderPassData.postProcessBuffers[1] = createColorBuffer(GL_RGB8, GL_RGB);
@@ -69,7 +74,9 @@ namespace TurnipRenderer{
 		renderPassData.transparencyColorBucketBuffers[3] = createColorBuffer(GL_RGBA8, GL_RGBA);
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
 		renderPassData.transparencyDepthBuffer = renderPassData.opaqueDepthBuffer;//createDepthBuffer();
-		
+
+				renderer.setOperation("Initial Framebuffer Creation");
+
 		renderPassData.opaqueFramebuffer = renderer.createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
 		renderPassData.postProcessingFramebuffers[0] = renderer.createFramebuffer(renderPassData.postProcessBuffers[0]);
 		renderPassData.postProcessingFramebuffers[1] = renderer.createFramebuffer(renderPassData.postProcessBuffers[1]);
@@ -283,7 +290,7 @@ void main(){
 					if (entity->shader){
 						glUseProgram(entity->shader->programId);
 						if (entity->material->texture){
-							renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->textureId);
+							renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->buffer);
 							glUniform1i(16, 0); // Bind uniform 16 to texture 0
 						}
 					}else{
