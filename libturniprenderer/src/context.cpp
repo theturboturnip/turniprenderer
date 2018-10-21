@@ -307,7 +307,7 @@ void main(){
 						}
 
 						glUniformMatrix4fv(1, 1, GL_FALSE,
-									   reinterpret_cast<const GLfloat*>(&M));
+										   reinterpret_cast<const GLfloat*>(&M));
 						glUniformMatrix4fv(2, 1, GL_FALSE,
 										   reinterpret_cast<const GLfloat*>(&lightMVP));
 						glUniform3fv(5, 1,
@@ -379,7 +379,6 @@ void main(){
 				});
 
 			//fprintf(stderr, "Finished the transparency blend pass\n");
-
 		}
 		// Postprocessing Effects
 		{
