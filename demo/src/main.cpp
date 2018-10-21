@@ -1,7 +1,7 @@
 #include <iostream>
 
 #include "turniprenderer/context.h"
-#include "turniprenderer/light.h"
+#include "turniprenderer/dirlight_component.h"
 
 #include "free_camera/component.h"
 #include "free_camera/system.h"

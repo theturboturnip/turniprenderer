@@ -1,8 +1,8 @@
 #pragma once
 
-#include "light.h"
-#include "system.h"
-#include "scene_access.h"
+#include "turniprenderer/dirlight_component.h"
+#include "turniprenderer/system.h"
+#include "turniprenderer/scene_access.h"
 
 namespace TurnipRenderer {
 	class DirectionalLightRenderer : public System<InputComponents<SceneAccessComponent, DirectionalLight, Transform>, OutputComponents<DirectionalLight>> {

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "component.h"
-#include "context_scene_aware.h"
+#include "turniprenderer/util/context_scene_aware.h"
 
 namespace TurnipRenderer {
 	class SceneAccessComponent : protected Component, protected ContextSceneAware {

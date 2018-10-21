@@ -3,7 +3,7 @@
 #include "turniprenderer/context.h"
 #include "turniprenderer/entity.h"
 
-#include "turniprenderer/private/external/imgui.h"
+#include "turniprenderer/external/imgui.h"
 
 namespace TurnipRenderer {
 	void Debug::DebugWindow::show(){

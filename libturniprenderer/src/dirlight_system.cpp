@@ -3,7 +3,7 @@
 #include <assert.h>
 
 #include "turniprenderer/context.h"
-#include "turniprenderer/bounds.h"
+#include "turniprenderer/util/bounds.h"
 
 namespace TurnipRenderer {
 	void DirectionalLightRenderer::runOnEntity(Entity* entity, const System::Inputs inputs, const System::Outputs outputs){

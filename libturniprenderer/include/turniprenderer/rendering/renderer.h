@@ -1,106 +1,19 @@
 #pragma once
 
-#include "private/external/gl.h"
-#include "private/external/glm.h"
+#include "turniprenderer/external/gl.h"
+#include "turniprenderer/external/glm.h"
 #include <SDL.h>
 
 #include <functional>
 
-#include "context_aware.h"
-#include "resource_manager.h"
-#include "mesh.h"
-#include "shader.h"
+#include "turniprenderer/util/context_aware.h"
+#include "turniprenderer/resource_manager.h"
+#include "turniprenderer/rendering/mesh.h"
+#include "turniprenderer/rendering/shader.h"
+#include "turniprenderer/rendering/buffers.h"
+#include "turniprenderer/rendering/texture_config.h"
 
 namespace TurnipRenderer {
-	struct TextureConfig {
-		glm::uvec2 size;
-
-		struct Format {
-			GLint internalFormat;
-			GLenum format;
-			GLenum dataType;
-		} formatInfo;
-
-		struct Filter {
-			GLenum min = GL_LINEAR;
-			GLenum mag = GL_LINEAR;
-		} filtering;
-
-		struct AddressMode {
-			AddressMode(GLenum wrapMode)
-				: wrapMode(wrapMode), borderColor(0) {}
-			AddressMode(glm::vec4 borderColor)
-				: wrapMode(GL_CLAMP_TO_BORDER), borderColor(borderColor) {}
-			
-			GLenum wrapMode; // Same for X,Y,Z
-			glm::vec4 borderColor;
-		} addressMode;
-					 
-		struct Compare {
-			constexpr Compare() {};
-			Compare(GLenum compareMode, GLenum compareFunc)
-				: compareMode(compareMode), compareFunc(compareFunc) {}
-			GLenum compareMode = GL_NONE;
-			GLenum compareFunc = GL_LEQUAL;
-		} compare;
-
-		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, GLenum wrapMode, Compare compare = Compare())
-			: TextureConfig(size, formatInfo, filtering, AddressMode(wrapMode), compare) {}
-		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, glm::vec4 borderColor, Compare compare = Compare())
-			: TextureConfig(size, formatInfo, filtering, AddressMode(borderColor), compare) {}
-		TextureConfig(glm::uvec2 size, Format formatInfo, Filter filtering, AddressMode addressMode, Compare compare = Compare())
-			: size(size),
-			  formatInfo(formatInfo),
-			  filtering(filtering),
-			  addressMode(addressMode),
-			  compare(compare) {}
-	};
-
-	// TODO: Destructor? Figure how to do that
-	struct AddressableBuffer {
-		AddressableBuffer(GLuint handle, TextureConfig config)
-			: config(config), handle(handle), bindlessHandle(0)  {}
-		TextureConfig config;
-
-	private:
-		friend class Renderer;
-
-		GLuint handle;
-		GLuint64 bindlessHandle;
-		// TODO: This will be weird if someone tries to use this with a bindless handle?
-		operator GLuint() const {
-			return handle;
-		}
-	};
-	// TODO: Will 'using ColorBuffer = AddressableBuffer;' keep the type safety?
-	// If so, then migrate to that.
-	struct ColorBuffer : public AddressableBuffer {
-		using AddressableBuffer::AddressableBuffer;
-	};
-	struct DepthBuffer : public AddressableBuffer {
-		using AddressableBuffer::AddressableBuffer;
-	};
-	struct FrameBuffer {
-		FrameBuffer(GLuint handle,
-					glm::uvec2 size,
-					std::vector<ResourceHandle<const ColorBuffer>> colorBuffers,
-					ResourceHandle<const DepthBuffer> depthBuffer)
-			: size(size), colorBuffers(colorBuffers), depthBuffer(depthBuffer), handle(handle) {}
-					
-		glm::uvec2 size;
-
-		std::vector<ResourceHandle<const ColorBuffer>> colorBuffers;
-		ResourceHandle<const DepthBuffer> depthBuffer;
-
-	private:
-		friend class Renderer;
-		
-		GLuint handle;
-		operator GLuint() const {
-			return handle;
-		}
-	};
-	
 	class Renderer : ContextAware {
 	public:
 		Renderer(Context& context)

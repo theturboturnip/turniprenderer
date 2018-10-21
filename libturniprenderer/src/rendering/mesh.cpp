@@ -1,4 +1,4 @@
-#include "turniprenderer/mesh.h"
+#include "turniprenderer/rendering/mesh.h"
 
 namespace TurnipRenderer {
 	Mesh::Mesh(MeshData&& data) : data(data) {

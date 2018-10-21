@@ -1,6 +1,6 @@
 #pragma once
 
-#include "private/external/glm.h"
+#include "turniprenderer/external/glm.h"
 
 namespace TurnipRenderer {
 	class Context;

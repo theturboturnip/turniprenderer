@@ -1,7 +1,7 @@
 #pragma once
 
-#include "resource.h"
-#include "texture.h"
+#include "turniprenderer/resource.h"
+#include "turniprenderer/rendering/texture.h"
 
 namespace TurnipRenderer {
 	class Material {

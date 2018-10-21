@@ -5,7 +5,7 @@
 #include <memory>
 #include <string>
 
-#include "context_aware.h"
+#include "turniprenderer/util/context_aware.h"
 #include "memory/heirarchy.h"
 
 namespace TurnipRenderer {

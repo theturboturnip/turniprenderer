@@ -1,11 +1,11 @@
 #pragma once
 
-#include "private/external/glm.h"
-#include "private/external/gl.h"
+#include "turniprenderer/external/glm.h"
+#include "turniprenderer/external/gl.h"
 
 #include <vector>
 
-#include "bounds.h"
+#include "turniprenderer/util/bounds.h"
 
 namespace TurnipRenderer {
 	class Mesh {

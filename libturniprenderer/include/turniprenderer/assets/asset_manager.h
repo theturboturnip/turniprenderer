@@ -2,8 +2,8 @@
 
 #include <vector>
 
-#include "../context_aware.h"
-#include "../resource.h"
+#include "turniprenderer/util/context_aware.h"
+#include "turniprenderer/resource.h"
 
 namespace TurnipRenderer {	
 	class AssetManager : ContextAware {

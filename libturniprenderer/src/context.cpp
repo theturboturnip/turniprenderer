@@ -4,9 +4,9 @@
 
 #include "turniprenderer/assets/asset_manager.h"
 #include "turniprenderer/entity.h"
-#include "turniprenderer/mesh.h"
+#include "turniprenderer/rendering/mesh.h"
 #include "turniprenderer/system.h"
-#include "turniprenderer/private/external/imgui.h"
+#include "turniprenderer/external/imgui.h"
 #include "turniprenderer/dirlight_system.h"
 
 namespace TurnipRenderer{

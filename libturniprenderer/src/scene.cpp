@@ -9,7 +9,7 @@
 
 #include "turniprenderer/context.h"
 #include "turniprenderer/entity.h"
-#include "turniprenderer/mesh.h"
+#include "turniprenderer/rendering/mesh.h"
 #include "turniprenderer/resource.h"
 #include "turniprenderer/system.h"
 

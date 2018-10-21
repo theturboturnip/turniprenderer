@@ -2,7 +2,7 @@
 
 #include "engine_fwd.h"
 #include "component.h"
-#include "context_aware.h"
+#include "turniprenderer/util/context_aware.h"
 #include "entity.h"
 
 #include <type_traits>

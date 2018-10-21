@@ -5,8 +5,8 @@
 #include <assert.h>
 
 #include "turniprenderer/context.h"
-#include "turniprenderer/texture.h"
-#include "turniprenderer/shader.h"
+#include "turniprenderer/rendering/texture.h"
+#include "turniprenderer/rendering/shader.h"
 
 #include "stb/stb_image.h" // TODO: turniprenderer/external/stb.h
 

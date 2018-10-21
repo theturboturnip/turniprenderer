@@ -1,8 +1,8 @@
 #pragma once
 
-#include "private/external/gl.h"
-#include "context_aware.h"
-#include "resource.h"
+#include "turniprenderer/external/gl.h"
+#include "turniprenderer/util/context_aware.h"
+#include "turniprenderer/resource.h"
 
 #include <string>
 #include <memory>

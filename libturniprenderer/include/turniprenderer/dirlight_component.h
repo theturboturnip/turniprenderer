@@ -2,10 +2,10 @@
 
 #include "component.h"
 
-#include "private/external/gl.h"
-#include "private/external/glm.h"
+#include "turniprenderer/external/gl.h"
+#include "turniprenderer/external/glm.h"
 
-#include "renderer.h"
+#include "turniprenderer/rendering/buffers.h"
 
 namespace TurnipRenderer {
 	class DirectionalLight : public Component {

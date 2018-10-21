@@ -3,13 +3,13 @@
 #include "scene.h"
 #include "scene_access.h"
 #include "component.h"
-#include "context_scene_aware.h"
+#include "turniprenderer/util/context_scene_aware.h"
 #include "engine_fwd.h"
-#include "private/external/glm.h"
+#include "turniprenderer/external/glm.h"
 
-#include "material.h"
-#include "mesh.h"
-#include "shader.h"
+#include "turniprenderer/rendering/material.h"
+#include "turniprenderer/rendering/mesh.h"
+#include "turniprenderer/rendering/shader.h"
 #include "resource.h"
 #include "transform.h"
 

@@ -8,13 +8,13 @@
 #include "resource_manager.h"
 #include "engine_fwd.h"
 #include "scene.h"
-#include "shader.h"
 #include "input.h"
-#include "material.h"
-#include "texture.h"
-#include "renderer.h"
+#include "turniprenderer/rendering/material.h"
+#include "turniprenderer/rendering/renderer.h"
+#include "turniprenderer/rendering/shader.h"
+#include "turniprenderer/rendering/texture.h"
 
-#include "private/external/imgui.h"
+#include "turniprenderer/external/imgui.h"
 #include <SDL.h>
 
 namespace TurnipRenderer{

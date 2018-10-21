@@ -1,4 +1,4 @@
-#include "turniprenderer/texture.h"
+#include "turniprenderer/rendering/texture.h"
 
 #include "turniprenderer/context.h"
 

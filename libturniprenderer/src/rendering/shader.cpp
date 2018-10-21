@@ -1,4 +1,4 @@
-#include "turniprenderer/shader.h"
+#include "turniprenderer/rendering/shader.h"
 
 #include <vector>
 #include "turniprenderer/context.h"
