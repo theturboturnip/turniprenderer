@@ -130,7 +130,9 @@ namespace TurnipRenderer {
 		void drawFullscreenQuadAdvanced(ShaderBase* shader, std::function<void()> bindTextures);
 
 		ResourceHandle<const ColorBuffer> createColorBuffer(TextureConfig);
-		void fillColorBuffer(ResourceHandle<const ColorBuffer>, std::vector<unsigned char>& data);
+		void fillColorBuffer(ResourceHandle<const ColorBuffer>&, std::vector<unsigned char>& data);
+		void generateMipmapsForColorBuffer(ResourceHandle<const ColorBuffer>&);
+		
 		ResourceHandle<const DepthBuffer> createDepthBuffer(TextureConfig);
 		template<class Container>
 		ResourceHandle<const FrameBuffer> createFramebuffer(const Container& colorBuffers, ResourceHandle<const DepthBuffer> depthBuffer = nullptr){

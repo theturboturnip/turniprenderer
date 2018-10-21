@@ -149,13 +149,19 @@ namespace TurnipRenderer {
 										 config
 										 ));
 	}
-	void Renderer::fillColorBuffer(ResourceHandle<const ColorBuffer> buffer, std::vector<unsigned char>& data){
+	void Renderer::fillColorBuffer(ResourceHandle<const ColorBuffer>& buffer, std::vector<unsigned char>& data){
 		assert(buffer->config.formatInfo.dataType == GL_UNSIGNED_BYTE);
 		
 		glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(*buffer));
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, buffer->config.size.x, buffer->config.size.y, buffer->config.formatInfo.format, buffer->config.formatInfo.dataType, data.data());
 		checkErrors("fillColorBuffer");
 	}
+	void Renderer::generateMipmapsForColorBuffer(ResourceHandle<const ColorBuffer>& buffer){
+		glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(*buffer));
+		glGenerateMipmap(GL_TEXTURE_2D);
+		checkErrors("generateMipmapsForColorBuffer");
+	}
+	
 	ResourceHandle<const DepthBuffer> Renderer::createDepthBuffer(TextureConfig config){
 		config.formatInfo = {
 			GL_DEPTH_COMPONENT,

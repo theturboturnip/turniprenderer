@@ -41,14 +41,13 @@ namespace TurnipRenderer {
 					imageFormat,
 					GL_UNSIGNED_BYTE
 					},
-			{ GL_LINEAR/*_MIPMAP_LINEAR*/, GL_LINEAR },
+			{ GL_LINEAR_MIPMAP_LINEAR, GL_LINEAR },
 			GL_REPEAT
 			);
 
 		buffer = context.renderer.createColorBuffer(config);
-		//context.renderer.generateMipmaps(buffer); // TODO
 		context.renderer.fillColorBuffer(buffer, this->data);
-	   
+		context.renderer.generateMipmapsForColorBuffer(buffer);
 
 		/*{
 			GLuint glError = glGetError();
