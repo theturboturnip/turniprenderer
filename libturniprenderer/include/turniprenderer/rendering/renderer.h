@@ -9,6 +9,7 @@
 #include "turniprenderer/util/context_aware.h"
 #include "turniprenderer/resource_manager.h"
 #include "turniprenderer/rendering/mesh.h"
+#include "turniprenderer/rendering/material.h"
 #include "turniprenderer/rendering/shader.h"
 #include "turniprenderer/rendering/buffers.h"
 #include "turniprenderer/rendering/texture_config.h"
@@ -37,14 +38,17 @@ namespace TurnipRenderer {
 
 		// TODO: Uniform Binding
 		// TODO: Pipelines. Have a Pipeline object which can be used to apply shader-agnostic state all at once, do diffs if you want.
-		
+
+		void bindMaterial(const ResourceHandle<const Material>&);
+
+		// TODO: Take a ResourceHandle<const Mesh>
 		void drawMesh(Mesh& mesh);
 		void drawFullscreenQuad(ShaderBase* shader, const ResourceHandle<const ColorBuffer>& buffer);
 		void drawFullscreenQuadAdvanced(ShaderBase* shader, std::function<void()> bindTextures);
 
 		ResourceHandle<const ColorBuffer> createColorBuffer(TextureConfig);
-		void fillColorBuffer(ResourceHandle<const ColorBuffer>&, std::vector<unsigned char>& data);
-		void generateMipmapsForColorBuffer(ResourceHandle<const ColorBuffer>&);
+		void fillColorBuffer(const ResourceHandle<const ColorBuffer>&, std::vector<unsigned char>& data);
+		void generateMipmapsForColorBuffer(const ResourceHandle<const ColorBuffer>&);
 		
 		ResourceHandle<const DepthBuffer> createDepthBuffer(TextureConfig);
 		template<class Container>
@@ -73,6 +77,7 @@ namespace TurnipRenderer {
 		ResourceManager<ColorBuffer, DepthBuffer, FrameBuffer> resources;
 
 		ResourceHandle<Mesh> fullscreenQuad;
+		ResourceHandle<ColorBuffer> whiteTexture;
 		
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;

@@ -287,31 +287,25 @@ void main(){
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->renderable() && entity->material->isOpaque()){
-					if (entity->shader){
-						glUseProgram(entity->shader->programId);
-						if (entity->material->texture){
-							renderer.bindTextureToSlot(GL_TEXTURE0, entity->material->texture->buffer);
-							glUniform1i(16, 0); // Bind uniform 16 to texture 0
-						}
-					}else{
-						glUseProgram(debugShaders.debugOpaqueShader->programId);
-					}
 					glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
 					glm::mat4 MVP = transformProjectionFromWorld * M;
-					glm::mat4 lightMVP;
-					glm::vec3 lightDirection;
-					if (shadowmapsToUse.size() > 0 && entity->shader && entity->material){
-						renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
-						glUniform1i(3, 1);
-						renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
-						glUniform1i(4, 2);
-						lightMVP = shadowmapsToUse[0].VP * M;
-						lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
-					}
-
-					glUniformMatrix4fv(0, 1, GL_FALSE,
-									   reinterpret_cast<const GLfloat*>(&MVP));
+					
 					if (entity->shader){
+						glUseProgram(entity->shader->programId);
+
+						renderer.bindMaterial(entity->material);
+
+						glm::mat4 lightMVP;
+						glm::vec3 lightDirection;
+						if (shadowmapsToUse.size() > 0){
+							renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
+							glUniform1i(3, 1);
+							renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
+							glUniform1i(4, 2);
+							lightMVP = shadowmapsToUse[0].VP * M;
+							lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
+						}
+
 						glUniformMatrix4fv(1, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&M));
 						glUniformMatrix4fv(2, 1, GL_FALSE,
@@ -320,7 +314,12 @@ void main(){
 									 reinterpret_cast<const GLfloat*>(&cameraPos));
 						glUniform3fv(6, 1,
 									 reinterpret_cast<const GLfloat*>(&lightDirection));
+					}else{
+						glUseProgram(debugShaders.debugOpaqueShader->programId);
 					}
+
+					glUniformMatrix4fv(0, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&MVP));
 
 					renderer.drawMesh(*entity->mesh);
 				}

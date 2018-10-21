@@ -69,6 +69,8 @@ namespace TurnipRenderer {
 			};
 			compileShaders(vertexShaders, 6, fragmentShaders, 6);
 		}
+
+		constexpr static unsigned int materialUniformStart = 16;
 		
 	private:		
 		static const char *const lightingCommonCode;

@@ -120,6 +120,31 @@ namespace TurnipRenderer {
 		checkErrors("bindTextureToSlot");
 	}
 
+	void Renderer::bindMaterial(const ResourceHandle<const Material>& material){
+		unsigned int uniformIndex = Shader::materialUniformStart;
+
+		{
+			if (material->texture)
+				bindTextureToSlot(GL_TEXTURE0, material->texture->buffer);
+			else
+				bindTextureToSlot(GL_TEXTURE0, whiteTexture);
+			glUniform1i(uniformIndex, 0);
+			uniformIndex++;
+		}
+		{
+			glUniform4fv(uniformIndex, 1, reinterpret_cast<const GLfloat*>(&material->color));
+			uniformIndex++;
+		}
+	}
+	
+	void Renderer::drawMesh(Mesh& mesh){
+		glBindVertexArray(mesh.getVAO());
+		checkErrors("drawMesh - bindVertexArray");
+		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.getIBO());
+		checkErrors("drawMesh - bindBuffer");
+		glDrawElements(GL_TRIANGLES, mesh.indices().size(), GL_UNSIGNED_INT, 0);
+		checkErrors("drawMesh - drawElements");
+	}
 	void Renderer::drawFullscreenQuad(ShaderBase* shader, const ResourceHandle<const ColorBuffer>& buffer){
 		drawFullscreenQuadAdvanced(shader, [this, buffer](){
 				// Bind the current postprocessing buffer to tex0
@@ -133,14 +158,6 @@ namespace TurnipRenderer {
 		bindTextures();
 		drawMesh(*fullscreenQuad);
 	}
-	void Renderer::drawMesh(Mesh& mesh){
-		glBindVertexArray(mesh.getVAO());
-		checkErrors("drawMesh - bindVertexArray");
-		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, mesh.getIBO());
-		checkErrors("drawMesh - bindBuffer");
-		glDrawElements(GL_TRIANGLES, mesh.indices().size(), GL_UNSIGNED_INT, 0);
-		checkErrors("drawMesh - drawElements");
-	}
 
 	ResourceHandle<const ColorBuffer> Renderer::createColorBuffer(TextureConfig config){
 		config.compare = TextureConfig::Compare(); // Disable comparisons
@@ -149,14 +166,14 @@ namespace TurnipRenderer {
 										 config
 										 ));
 	}
-	void Renderer::fillColorBuffer(ResourceHandle<const ColorBuffer>& buffer, std::vector<unsigned char>& data){
+	void Renderer::fillColorBuffer(const ResourceHandle<const ColorBuffer>& buffer, std::vector<unsigned char>& data){
 		assert(buffer->config.formatInfo.dataType == GL_UNSIGNED_BYTE);
 		
 		glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(*buffer));
 		glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, buffer->config.size.x, buffer->config.size.y, buffer->config.formatInfo.format, buffer->config.formatInfo.dataType, data.data());
 		checkErrors("fillColorBuffer");
 	}
-	void Renderer::generateMipmapsForColorBuffer(ResourceHandle<const ColorBuffer>& buffer){
+	void Renderer::generateMipmapsForColorBuffer(const ResourceHandle<const ColorBuffer>& buffer){
 		glBindTexture(GL_TEXTURE_2D, static_cast<GLuint>(*buffer));
 		glGenerateMipmap(GL_TEXTURE_2D);
 		checkErrors("generateMipmapsForColorBuffer");

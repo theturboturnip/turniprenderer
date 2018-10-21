@@ -53,6 +53,8 @@ void main(){
 #define TURNIP_CONCAT(A, B) TURNIP_CONCAT_IMPL(A, B)
 #define TURNIP_TEXTURE_NAME(NAME) TURNIP_CONCAT(NAME, _texture)
 
+#define TURNIP_UNIFORM(N) layout(location = 16 + N) uniform
+
 struct TurnipLight {
 	vec3 radiance;
 	vec3 direction_worldSpace; // Incoming Direction
