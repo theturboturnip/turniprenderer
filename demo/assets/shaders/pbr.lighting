@@ -25,7 +25,7 @@ TURNIP_FRAGMENT_TEXTURE(0, albedoTexture);
 TURNIP_UNIFORM(1) vec4 color;
 PBRFragment PBRFillFragment(PBRVertex vertex, vec2 uv0){
 	PBRFragment fragment;
-	fragment.albedo = pow(TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0), vec4(2.2, 2.2, 2.2, 1));
+	fragment.albedo = pow(TURNIP_FRAGMENT_SAMPLE(albedoTexture, uv0), vec4(2.2, 2.2, 2.2, 1)) * color;
 	fragment.roughness = 0.1f;
 	fragment.metallic = 0.0f;
 

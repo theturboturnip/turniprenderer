@@ -90,13 +90,17 @@ layout(location = 3) in vec2 uv0;
 
 layout(location = 0) uniform mat4 MVP;
 layout(location = 1) uniform mat4 M;
+#if !TURNIP_DISABLE_SHADOWMAPS
 layout(location = 2) uniform mat4 lightMVP;
+#endif
 layout(location = 5) uniform vec3 camPos;
 layout(location = 6) uniform vec3 lightDirection;
 
 layout(location = 0) out struct VertexOut {
     vec2 uv0;
+#if !TURNIP_DISABLE_SHADOWMAPS
     vec4 shadowmapPos;
+#endif
     vec3 lightDirection;
     TURNIP_LIGHTING_VDATA vData;
 } OUT;
@@ -105,7 +109,9 @@ void main(){
     gl_Position = MVP * vec4(position, 1);
     OUT.uv0 = uv0;
     OUT.lightDirection = lightDirection;
+#if !TURNIP_DISABLE_SHADOWMAPS
     OUT.shadowmapPos = lightMVP * vec4(position, 1);
+#endif
 
     OUT.vData = TURNIP_LIGHTING_VDATA_FILL_FUNC (normalize(camPos - (M * vec4(position, 1)).xyz), normalize(vec3(M * vec4(normal, 0))), vec3(0));
 }
@@ -121,24 +127,34 @@ void main(){
 #line 6000 0
 layout(location = 0) in struct {
     vec2 uv0;
+#if !TURNIP_DISABLE_SHADOWMAPS
     vec4 shadowmapPos;
+#endif
     vec3 lightingDirection;
     TURNIP_LIGHTING_VDATA vData;
 } IN;
 
 layout(location = 0) out vec4 OUTPUT_COLOR;
 
+#if !TURNIP_DISABLE_SHADOWMAPS
 layout(location = 3) uniform sampler2D shadowmapColor;
 layout(location = 4) uniform sampler2DShadow shadowmapDepth;
+#else
+layout(location = 3) uniform vec3 lightColor;
+#endif
 
 void main(){
     TurnipLight dirLight;
+#if !TURNIP_DISABLE_SHADOWMAPS
     {
         vec3 lightSpaceCoord = IN.shadowmapPos.xyz / IN.shadowmapPos.w;
         lightSpaceCoord = lightSpaceCoord * 0.5 + 0.5; // Transform to 0-1
         lightSpaceCoord.z -= 0.05; // Bias
         dirLight.radiance = texture(shadowmapColor, lightSpaceCoord.xy).rgb * texture(shadowmapDepth, lightSpaceCoord);
     }
+#else
+    dirLight.radiance = lightColor;
+#endif
     dirLight.direction_worldSpace = IN.lightingDirection;
 
     TURNIP_LIGHTING_FDATA fData = TURNIP_LIGHTING_FDATA_FILL_FUNC (IN.vData, IN.uv0);
@@ -162,15 +178,21 @@ void main() {
 }
 )";
 		// TODO: Make this a lighting shader
-		transparentColorShader = context.resources.addResource(std::make_unique<UnlitShader>(mvpVertexShader, R"(
+		/*transparentColorShader = context.resources.addResource(std::make_unique<UnlitShader>(mvpVertexShader, R"(
 layout(location = 0) out vec4 color;
 layout(location = 1) uniform vec4 colorUniform;
 
 void main(){
     color = colorUniform;
 }
-)"));
-		//transparentColorShader = context.resources.addResource(Shader(lightingCode));
+)"));*/
+		phongTransparentShader = phongOpaqueShader;//context.resources.addResource(Shader(lightingCode));
+		phongTransparentNoShadowShader = context.resources.addResource(
+			std::make_unique<Shader>(
+				R"(#define TURNIP_DISABLE_SHADOWMAPS 1)",
+				lightingCode
+				)
+			);
 
 		depthOnlyShader = context.resources.addResource(std::make_unique<UnlitShader>(mvpVertexShader, R"(
 void main(){}

@@ -69,6 +69,27 @@ namespace TurnipRenderer {
 			};
 			compileShaders(vertexShaders, 6, fragmentShaders, 6);
 		}
+		Shader(std::string defines, const std::string& lightingCode){
+			ShaderBase::ShaderSource vertexShaders[] = {
+				ShaderConstants::versionExtensionPrefix,
+				defines.c_str(),
+				lightingVertexDefines,
+				lightingCommonCode,
+				lightingCode.c_str(),
+				lightingAdaptorCode,
+				lightingVertexCode
+			};
+			ShaderBase::ShaderSource fragmentShaders[] = {
+				ShaderConstants::versionExtensionPrefix,
+				defines.c_str(),
+				lightingFragmentDefines,
+				lightingCommonCode,
+				lightingCode.c_str(),
+				lightingAdaptorCode,
+				lightingFragmentCode
+			};
+			compileShaders(vertexShaders, 7, fragmentShaders, 7);
+		}
 
 		constexpr static unsigned int materialUniformStart = 16;
 		
@@ -91,7 +112,9 @@ namespace TurnipRenderer {
 	public:
 		DefaultShaders(Context& context) : ContextAware(context) {}
 		ResourceHandle<Shader> phongOpaqueShader;
-		ResourceHandle<UnlitShader> transparentColorShader;
+		ResourceHandle<Shader> phongTransparentShader;
+		ResourceHandle<Shader> phongTransparentNoShadowShader;
+
 		ResourceHandle<UnlitShader> depthOnlyShader;
 
 	private:

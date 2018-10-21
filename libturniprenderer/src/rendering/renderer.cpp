@@ -95,6 +95,18 @@ namespace TurnipRenderer {
 
 			fullscreenQuad = context.resources.addResource(std::make_unique<Mesh>(std::move(quadData)));
 		}
+		// Create white ColorBuffer
+		{
+			std::vector<unsigned char> textureData = {
+				255, 255, 255, 255,
+				255, 255, 255, 255,
+				255, 255, 255, 255,
+				255, 255, 255, 255,
+			};
+			whiteTexture = context.resources.addResource(
+				std::make_unique<Texture>(context, std::move(textureData), 2, 2, 4)
+				);
+		}
 	}
 	Renderer::~Renderer(){
 		if (sdlWindow){
@@ -127,7 +139,7 @@ namespace TurnipRenderer {
 			if (material->texture)
 				bindTextureToSlot(GL_TEXTURE0, material->texture->buffer);
 			else
-				bindTextureToSlot(GL_TEXTURE0, whiteTexture);
+				bindTextureToSlot(GL_TEXTURE0, whiteTexture->buffer);
 			glUniform1i(uniformIndex, 0);
 			uniformIndex++;
 		}

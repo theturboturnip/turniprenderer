@@ -271,6 +271,43 @@ void main(){
 				}
 			}
 		}
+		auto drawEntity = [&](Entity* entity){
+			glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
+			glm::mat4 MVP = transformProjectionFromWorld * M;
+					
+			if (entity->shader){
+				glUseProgram(entity->shader->programId);
+
+				renderer.bindMaterial(entity->material);
+
+				glm::mat4 lightMVP;
+				glm::vec3 lightDirection;
+				if (shadowmapsToUse.size() > 0){
+					renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
+					glUniform1i(3, 1);
+					renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
+					glUniform1i(4, 2);
+					lightMVP = shadowmapsToUse[0].VP * M;
+					lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
+				}
+
+				glUniformMatrix4fv(1, 1, GL_FALSE,
+								   reinterpret_cast<const GLfloat*>(&M));
+				glUniformMatrix4fv(2, 1, GL_FALSE,
+								   reinterpret_cast<const GLfloat*>(&lightMVP));
+				glUniform3fv(5, 1,
+							 reinterpret_cast<const GLfloat*>(&cameraPos));
+				glUniform3fv(6, 1,
+							 reinterpret_cast<const GLfloat*>(&lightDirection));
+			}else{
+				glUseProgram(debugShaders.debugOpaqueShader->programId);
+			}
+
+			glUniformMatrix4fv(0, 1, GL_FALSE,
+							   reinterpret_cast<const GLfloat*>(&MVP));
+
+			renderer.drawMesh(*entity->mesh);
+		};
 		{
 			renderer.setOperation("Opaque Draw");
 			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
@@ -287,74 +324,41 @@ void main(){
 
 			for (auto* entity : scene.heirarchy){
 				if (entity->renderable() && entity->material->isOpaque()){
-					glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
-					glm::mat4 MVP = transformProjectionFromWorld * M;
-					
-					if (entity->shader){
-						glUseProgram(entity->shader->programId);
-
-						renderer.bindMaterial(entity->material);
-
-						glm::mat4 lightMVP;
-						glm::vec3 lightDirection;
-						if (shadowmapsToUse.size() > 0){
-							renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
-							glUniform1i(3, 1);
-							renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
-							glUniform1i(4, 2);
-							lightMVP = shadowmapsToUse[0].VP * M;
-							lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
-						}
-
-						glUniformMatrix4fv(1, 1, GL_FALSE,
-										   reinterpret_cast<const GLfloat*>(&M));
-						glUniformMatrix4fv(2, 1, GL_FALSE,
-										   reinterpret_cast<const GLfloat*>(&lightMVP));
-						glUniform3fv(5, 1,
-									 reinterpret_cast<const GLfloat*>(&cameraPos));
-						glUniform3fv(6, 1,
-									 reinterpret_cast<const GLfloat*>(&lightDirection));
-					}else{
-						glUseProgram(debugShaders.debugOpaqueShader->programId);
-					}
-
-					glUniformMatrix4fv(0, 1, GL_FALSE,
-									   reinterpret_cast<const GLfloat*>(&MVP));
-
-					renderer.drawMesh(*entity->mesh);
+					drawEntity(entity);
 				}
 			}
 		}
 		// Draw to transparency buffer
 		{
 			renderer.setOperation("Transparency Draw");
-			renderer.bindFrameBuffer(renderPassData.transparencyBucketingFramebuffer);
-			glClearColor(0,0,0,0);
-			glClear(GL_COLOR_BUFFER_BIT);
-			glUseProgram(debugTransparentProgram->programId);
+			//renderer.bindFrameBuffer(renderPassData.transparencyBucketingFramebuffer);
+			//glClearColor(0,0,0,0);
+			//glClear(GL_COLOR_BUFFER_BIT);
+			//glUseProgram(debugTransparentProgram->programId);
 
 			glEnable(GL_BLEND);
-			glBlendFunc(GL_ONE, GL_ONE);
+			glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
 			glEnable(GL_DEPTH_TEST);
 			glDepthFunc(GL_LESS);
 			glDepthMask(GL_FALSE);
 			
-			glUniform1f(1, cameraData.depthMin);
-			glUniform1f(2, cameraData.depthMax);
+			//glUniform1f(1, cameraData.depthMin);
+			//glUniform1f(2, cameraData.depthMax);
 
 			for (auto* entity : scene.heirarchy){
-				if (entity->renderable() && entity->material->isTranslucent()){
-					glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
+				if (entity->renderable() && entity->material->isTranslucent() && entity->shader){
+					/*glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
 					glUniformMatrix4fv(0, 1, GL_FALSE,
 									   reinterpret_cast<const GLfloat*>(&MVP));
 					glUniform4fv(3, 1, reinterpret_cast<const GLfloat*>(&entity->material->color));
-					renderer.drawMesh(*entity->mesh);
+					renderer.drawMesh(*entity->mesh);*/
+					drawEntity(entity);
 				}
 			}
 		}
 		// Blend transparency buffer onto opaque buffer
-		{
+		/*{
 			renderer.setOperation("Transparency Resolve");
 			renderer.bindFrameBuffer(renderPassData.opaqueFramebuffer);
 			
@@ -379,7 +383,7 @@ void main(){
 				});
 
 			//fprintf(stderr, "Finished the transparency blend pass\n");
-		}
+			}*/
 		// Postprocessing Effects
 		{
 			renderer.setOperation("Post-Processing");

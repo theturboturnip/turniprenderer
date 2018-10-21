@@ -85,15 +85,40 @@ namespace TurnipRenderer {
 		glEnable(GL_DEPTH_TEST);
 		glDepthMask(GL_FALSE);
 
-		glUseProgram(context.getDefaultShaders().transparentColorShader->programId);
+		glUseProgram(context.getDefaultShaders().phongTransparentNoShadowShader->programId);
 		for (auto* entity : getComponent<const SceneAccessComponent*>(inputs)->getScene().heirarchy){
-			if (entity->renderable() && entity->material->isTranslucent()){
-				glm::mat4 MVP = transformProjectionFromWorld * entity->transform.transformWorldSpaceFromModelSpace();
-				glUniformMatrix4fv(0, 1, GL_FALSE,
-								   reinterpret_cast<const GLfloat*>(&MVP));
-				glUniform4fv(1, 1, reinterpret_cast<const GLfloat*>(&entity->material->color));
-
-				context.renderer.drawMesh(*entity->mesh);
+			if (entity->renderable() && entity->material->isTranslucent() && entity->shader){
+				glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
+				glm::mat4 MVP = transformProjectionFromWorld * M;
+									
+					context.renderer.bindMaterial(entity->material);
+					
+					//glm::mat4 lightMVP;
+					glm::vec3 lightDirection = lightRotation * glm::vec4(0,0,1,0);
+					/*if (shadowmapsToUse.size() > 0){
+						renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
+						glUniform1i(3, 1);
+						renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
+						glUniform1i(4, 2);
+						lightMVP = shadowmapsToUse[0].VP * M;
+					lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
+					}*/
+					
+					glUniformMatrix4fv(1, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&M));
+					glUniform3fv(3, 1, reinterpret_cast<const GLfloat*>(&directionalLight.color));
+					/*glUniformMatrix4fv(2, 1, GL_FALSE,
+					  reinterpret_cast<const GLfloat*>(&lightMVP));*/
+					glm::vec3 cameraPos = glm::inverse(transformViewFromWorld) * glm::vec4(0,0,0,1);
+					glUniform3fv(5, 1,
+								 reinterpret_cast<const GLfloat*>(&cameraPos));
+					glUniform3fv(6, 1,
+								 reinterpret_cast<const GLfloat*>(&lightDirection));
+				
+					glUniformMatrix4fv(0, 1, GL_FALSE,
+									   reinterpret_cast<const GLfloat*>(&MVP));
+					
+					context.renderer.drawMesh(*entity->mesh);
 			}
 		}
 

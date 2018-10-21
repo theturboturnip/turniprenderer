@@ -10,6 +10,7 @@
 #include "turniprenderer/resource_manager.h"
 #include "turniprenderer/rendering/mesh.h"
 #include "turniprenderer/rendering/material.h"
+#include "turniprenderer/rendering/texture.h"
 #include "turniprenderer/rendering/shader.h"
 #include "turniprenderer/rendering/buffers.h"
 #include "turniprenderer/rendering/texture_config.h"
@@ -77,7 +78,7 @@ namespace TurnipRenderer {
 		ResourceManager<ColorBuffer, DepthBuffer, FrameBuffer> resources;
 
 		ResourceHandle<Mesh> fullscreenQuad;
-		ResourceHandle<ColorBuffer> whiteTexture;
+		ResourceHandle<Texture> whiteTexture;
 		
 		SDL_Window* sdlWindow = nullptr;
 		SDL_GLContext openGlContext;
