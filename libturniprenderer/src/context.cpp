@@ -5,6 +5,7 @@
 #include "turniprenderer/assets/asset_manager.h"
 #include "turniprenderer/entity.h"
 #include "turniprenderer/rendering/mesh.h"
+#include "turniprenderer/rendering/renderhelpers.h"
 #include "turniprenderer/system.h"
 #include "turniprenderer/external/imgui.h"
 #include "turniprenderer/dirlight_system.h"
@@ -36,8 +37,6 @@ namespace TurnipRenderer{
 		debugShaders.createShaders();
 		defaultShaders.createShaders();
 
-		
-
 		scene.systems.push_back(std::make_unique<DirectionalLightRenderer>(*this));
 	}
 
@@ -50,7 +49,7 @@ namespace TurnipRenderer{
 				{ GL_NEAREST, GL_NEAREST },
 				GL_CLAMP_TO_EDGE				
 			};
-				renderer.setOperation("Initial Colorbuffer Creation");
+			renderer.setOperation("Initial Colorbuffer Creation");
 	
 			return renderer.createColorBuffer(config);
 		};
@@ -75,7 +74,7 @@ namespace TurnipRenderer{
 		renderPassData.opaqueDepthBuffer = createDepthBuffer();
 		renderPassData.transparencyDepthBuffer = renderPassData.opaqueDepthBuffer;//createDepthBuffer();
 
-				renderer.setOperation("Initial Framebuffer Creation");
+		renderer.setOperation("Initial Framebuffer Creation");
 
 		renderPassData.opaqueFramebuffer = renderer.createFramebuffer(renderPassData.colorBuffer, renderPassData.opaqueDepthBuffer);
 		renderPassData.postProcessingFramebuffers[0] = renderer.createFramebuffer(renderPassData.postProcessBuffers[0]);
@@ -246,6 +245,11 @@ void main(){
 		glm::mat4 transformViewFromWorld = glm::inverse(scene.camera->transform.transformWorldSpaceFromModelSpace());
 		glm::mat4 transformProjectionFromWorld = cameraData.getTransformProjectionFromView() * transformViewFromWorld;
 		glm::vec3 cameraPos = scene.camera->transform.worldPosition();
+		Shadowmap* shadowmap = nullptr;
+		if (shadowmapsToUse.size() > 0) {
+			shadowmap = &shadowmapsToUse[0];
+		}
+		RenderHelpers::StaticRenderData staticRenderData {transformProjectionFromWorld, shadowmap, cameraPos};
 
 		// Depth Pass
 		{
@@ -272,41 +276,7 @@ void main(){
 			}
 		}
 		auto drawEntity = [&](Entity* entity){
-			glm::mat4 M = entity->transform.transformWorldSpaceFromModelSpace();
-			glm::mat4 MVP = transformProjectionFromWorld * M;
-					
-			if (entity->shader){
-				glUseProgram(entity->shader->programId);
-
-				renderer.bindMaterial(entity->material);
-
-				glm::mat4 lightMVP;
-				glm::vec3 lightDirection;
-				if (shadowmapsToUse.size() > 0){
-					renderer.bindTextureToSlot(GL_TEXTURE1, shadowmapsToUse[0].colorBuffer);
-					glUniform1i(3, 1);
-					renderer.bindTextureToSlot(GL_TEXTURE2, shadowmapsToUse[0].depthBuffer);
-					glUniform1i(4, 2);
-					lightMVP = shadowmapsToUse[0].VP * M;
-					lightDirection = glm::inverse(shadowmapsToUse[0].V) * glm::vec4(0,0,1,0);
-				}
-
-				glUniformMatrix4fv(1, 1, GL_FALSE,
-								   reinterpret_cast<const GLfloat*>(&M));
-				glUniformMatrix4fv(2, 1, GL_FALSE,
-								   reinterpret_cast<const GLfloat*>(&lightMVP));
-				glUniform3fv(5, 1,
-							 reinterpret_cast<const GLfloat*>(&cameraPos));
-				glUniform3fv(6, 1,
-							 reinterpret_cast<const GLfloat*>(&lightDirection));
-			}else{
-				glUseProgram(debugShaders.debugOpaqueShader->programId);
-			}
-
-			glUniformMatrix4fv(0, 1, GL_FALSE,
-							   reinterpret_cast<const GLfloat*>(&MVP));
-
-			renderer.drawMesh(*entity->mesh);
+			RenderHelpers::drawEntity(*this, *entity, staticRenderData);
 		};
 		{
 			renderer.setOperation("Opaque Draw");

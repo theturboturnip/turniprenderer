@@ -7,7 +7,7 @@ _build:
 		bash ./demo/generate_sources.sh
 
 	@# Go to the build folder, run CMake and finally use the resulting makefile
-	@mkdir -p ./build/ && cd ./build/ && cmake .. && make --no-print-directory
+	@mkdir -p ./build/ && cd ./build/ && cmake -DCMAKE_C_COMPILER=/usr/bin/clang -DCMAKE_CXX_COMPILER=/usr/bin/clang++ .. && make --no-print-directory
 
 clean:
 	rm -rf ./build/libturniprenderer ./build/demo

@@ -119,6 +119,7 @@ vec4 PBRLighting(PBRVertex vertex, PBRFragment fragment, TurnipLight light){
 	// Correction
 	finalColor = finalColor / (finalColor + vec3(1.0));
 	finalColor = pow(finalColor, vec3(1.0/2.2));
-	
+
+// TODO: This is wrong for specular, the diffuse should be multiplied by alpha and then 1 should be returned
 	return vec4(finalColor, fragment.albedo.a);
 }

@@ -13,6 +13,7 @@
 #include "turniprenderer/rendering/renderer.h"
 #include "turniprenderer/rendering/shader.h"
 #include "turniprenderer/rendering/texture.h"
+#include "turniprenderer/rendering/shadowmap.h"
 
 #include "turniprenderer/external/imgui.h"
 #include <SDL.h>
@@ -78,12 +79,6 @@ namespace TurnipRenderer{
 		constexpr static size_t OPENGL_MAJOR = 3;
 		constexpr static size_t OPENGL_MINOR = 3;
 
-		struct Shadowmap {
-			ResourceHandle<const ColorBuffer> colorBuffer;
-			ResourceHandle<const DepthBuffer> depthBuffer;
-			glm::mat4 VP;
-			glm::mat4 V;
-		};
 		std::vector<Shadowmap> shadowmapsToUse;
 
 		// TODO: Figure out a way to let Systems request renderer access
